@@ -21,7 +21,7 @@ export function MobileSheet() {
           animate={{ y: 0 }}
           exit={{ y: "100%" }}
           transition={{ type: "spring", stiffness: 380, damping: 36 }}
-          className="absolute inset-x-0 bottom-0 top-10 z-40 flex flex-col bg-[var(--os-window)]"
+          className="glass-panel absolute inset-x-0 bottom-0 top-11 z-40 flex flex-col rounded-none border-x-0"
         >
           <div className="flex h-12 shrink-0 items-center justify-between border-b border-white/10 px-3">
             <button
