@@ -7,53 +7,42 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { AnimatePresence, motion, useMotionValue, useSpring } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ToddRig } from "@/components/todd/ToddRig";
 import { useTodd } from "@/lib/todd/todd-store";
 import { useWindows } from "@/lib/os/window-store";
+import {
+  clamp,
+  integrate,
+  jumpImpulse,
+  readLandmarks,
+  runToward,
+  type PhysicsBody,
+} from "@/lib/todd/physics";
 
 type Props = {
   layout: "desktop" | "mobile";
   viewport: { width: number; height: number };
 };
 
-const SIZE_DESKTOP = 118;
-const SIZE_MOBILE = 72;
-const STATUS = 44;
-const DOCK = 100;
-
-function clamp(n: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, n));
-}
-
-function terminalPerch(vw: number, vh: number) {
-  const el = document.querySelector<HTMLElement>('[data-todd-window="terminal"]');
-  if (el) {
-    const r = el.getBoundingClientRect();
-    return {
-      x: clamp(r.right - SIZE_DESKTOP * 0.62, 8, vw - SIZE_DESKTOP - 8),
-      y: clamp(r.top - SIZE_DESKTOP * 0.62, STATUS, vh - DOCK - SIZE_DESKTOP),
-    };
-  }
-  return {
-    x: vw * 0.5 + 180,
-    y: vh * 0.28,
-  };
-}
+const SIZE_DESKTOP = 152;
+const SIZE_MOBILE = 88;
+const STATUS = 48;
+const DOCK = 108;
 
 const QUIPS = [
-  "boop",
+  "boop.",
   "hey!!",
   "don't poke the frog",
   "ok that tickled",
   "again??",
-  "i'm fragile (emotionally)",
-  "type todd dance 👀",
+  "type todd dance",
+  "i saw that cursor",
 ];
 
 export function ToddStage({ layout, viewport }: Props) {
   const todd = useTodd();
-  const { windows } = useWindows();
+  const { windows, focused } = useWindows();
   const {
     state,
     paused,
@@ -70,67 +59,59 @@ export function ToddStage({ layout, viewport }: Props) {
   } = todd;
 
   const size = layout === "mobile" ? SIZE_MOBILE : SIZE_DESKTOP;
-  const [facing, setFacing] = useState<1 | -1>(1);
-  const [lookTilt, setLookTilt] = useState({ x: 0, y: 0 });
+  const [facing, setFacing] = useState<1 | -1>(-1);
+  const [look, setLook] = useState({ x: 0, y: 0 });
+  const [gaitPhase, setGaitPhase] = useState(0);
+  const [dancePhase, setDancePhase] = useState(0);
+  const [squashY, setSquashY] = useState(1);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [hiddenTab, setHiddenTab] = useState(false);
-  const [perching, setPerching] = useState(true);
+  const [renderPos, setRenderPos] = useState({
+    x: viewport.width * 0.58,
+    y: viewport.height * 0.22,
+  });
 
-  const x = useMotionValue(viewport.width * 0.62);
-  const y = useMotionValue(viewport.height * 0.28);
-  const sx = useSpring(x, { stiffness: 110, damping: 18 });
-  const sy = useSpring(y, { stiffness: 110, damping: 18 });
-
-  const dragRef = useRef<{ px: number; py: number; ox: number; oy: number } | null>(null);
-  const timers = useRef<number[]>([]);
-  const lastChaos = useRef(0);
-  const clickResetTimer = useRef<number | null>(null);
-  const posRef = useRef({ x: viewport.width * 0.62, y: viewport.height * 0.28 });
-  const draggedAway = useRef(false);
-
-  const clearTimers = () => {
-    timers.current.forEach((t) => clearTimeout(t));
-    timers.current = [];
-  };
+  const bodyRef = useRef<PhysicsBody>({
+    pos: { x: viewport.width * 0.58, y: viewport.height * 0.22 },
+    vel: { x: 0, y: 0 },
+    grounded: false,
+  });
+  const modeRef = useRef<
+    "perch" | "wander" | "chase" | "flee" | "sleep" | "dance" | "drag"
+  >("perch");
+  const targetRef = useRef<{ x: number; y: number } | null>(null);
+  const dragRef = useRef<{
+    px: number;
+    py: number;
+    ox: number;
+    oy: number;
+  } | null>(null);
+  const clickReset = useRef<number | null>(null);
+  const lastDecision = useRef(0);
+  const gaitDist = useRef(0);
+  const danceT = useRef(0);
+  const prevFocused = useRef(focused);
+  const landHold = useRef(0);
 
   const bounds = useCallback(() => {
+    const floorY = viewport.height - DOCK - size * 0.15;
     return {
       minX: 8,
       maxX: Math.max(8, viewport.width - size - 8),
       minY: STATUS + 4,
-      maxY: Math.max(STATUS, viewport.height - DOCK - size),
+      maxY: floorY,
+      floorY,
     };
   }, [viewport.width, viewport.height, size]);
 
-  const moveTo = useCallback(
-    (nx: number, ny: number, mode: "walk" | "hop" | "commanded" = "hop") => {
-      if (paused || reducedMotion || hiddenTab) return;
-      const b = bounds();
-      const tx = clamp(nx, b.minX, b.maxX);
-      const ty = clamp(ny, b.minY, b.maxY);
-      setFacing(tx >= posRef.current.x ? 1 : -1);
-      trySetState(mode);
-      x.set(tx);
-      y.set(ty);
-      posRef.current = { x: tx, y: ty };
-      const t = window.setTimeout(() => {
-        if (!["dance", "sleep", "dragged"].includes(state)) {
-          trySetState("idle", true);
-        }
-      }, 650);
-      timers.current.push(t);
-    },
-    [paused, reducedMotion, hiddenTab, bounds, trySetState, x, y, state]
-  );
-
-  const snapToPerch = useCallback(() => {
-    const p = terminalPerch(viewport.width, viewport.height);
-    x.set(p.x);
-    y.set(p.y);
-    posRef.current = p;
-    setPerching(true);
-    setFacing(-1);
-  }, [viewport.width, viewport.height, x, y]);
+  const perchOnTerminal = useCallback(() => {
+    const marks = readLandmarks(viewport.width, viewport.height, size);
+    const perch =
+      marks.find((m) => m.id === "perch-terminal") ||
+      marks.find((m) => m.kind === "perch");
+    if (!perch) return null;
+    return { x: perch.x, y: perch.y };
+  }, [viewport.width, viewport.height, size]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -146,143 +127,303 @@ export function ToddStage({ layout, viewport }: Props) {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
-  // Follow terminal window while perching
+  // Boot onto terminal perch
   useEffect(() => {
-    if (!perching || draggedAway.current || paused) return;
-    if (!windows.terminal.open || windows.terminal.minimized) return;
-
-    const follow = () => {
-      const p = terminalPerch(viewport.width, viewport.height);
-      x.set(p.x);
-      y.set(p.y);
-      posRef.current = p;
+    const p = perchOnTerminal();
+    if (!p) return;
+    bodyRef.current = {
+      pos: p,
+      vel: { x: 0, y: 0 },
+      grounded: true,
     };
-    follow();
-    const id = window.setInterval(follow, 120);
-    return () => clearInterval(id);
-  }, [
-    perching,
-    paused,
-    windows.terminal.open,
-    windows.terminal.minimized,
-    windows.terminal.x,
-    windows.terminal.y,
-    windows.terminal.width,
-    windows.terminal.maximized,
-    viewport.width,
-    viewport.height,
-    x,
-    y,
-  ]);
+    setRenderPos(p);
+    modeRef.current = "perch";
+    setFacing(-1);
+  }, [perchOnTerminal]);
 
+  // React to newly focused windows
   useEffect(() => {
-    if (!draggedAway.current) snapToPerch();
-  }, [snapToPerch]);
+    if (prevFocused.current !== focused && focused && focused !== "terminal") {
+      if (!paused && !reducedMotion && modeRef.current !== "drag") {
+        const marks = readLandmarks(viewport.width, viewport.height, size);
+        const perch = marks.find((m) => m.id === `perch-${focused}`);
+        if (perch && Math.random() < 0.7) {
+          modeRef.current = "chase";
+          targetRef.current = { x: perch.x, y: perch.y };
+          trySetState("walk");
+          say("oooh new window");
+        }
+      }
+    }
+    prevFocused.current = focused;
+  }, [focused, paused, reducedMotion, viewport, size, trySetState, say]);
 
+  // Cursor look
   useEffect(() => {
     if (reducedMotion || paused || hiddenTab) return;
     const onMove = (e: MouseEvent) => {
-      const cx = posRef.current.x + size / 2;
-      const cy = posRef.current.y + size * 0.35;
-      setLookTilt({
-        x: clamp((e.clientX - cx) / 80, -1, 1),
-        y: clamp((e.clientY - cy) / 80, -1, 1),
+      const b = bodyRef.current.pos;
+      const cx = b.x + size / 2;
+      const cy = b.y + size * 0.3;
+      setLook({
+        x: clamp((e.clientX - cx) / 90, -1, 1),
+        y: clamp((e.clientY - cy) / 90, -1, 1),
       });
-      setFacing(e.clientX >= cx ? 1 : -1);
+      if (modeRef.current === "perch" || modeRef.current === "sleep") {
+        setFacing(e.clientX >= cx ? 1 : -1);
+      }
     };
     window.addEventListener("mousemove", onMove, { passive: true });
     return () => window.removeEventListener("mousemove", onMove);
   }, [reducedMotion, paused, hiddenTab, size]);
 
-  // Playful autonomous antics
+  // Main simulation loop
   useEffect(() => {
-    if (paused || reducedMotion || hiddenTab) return;
-    if (["dragged", "dance", "sleep"].includes(state)) return;
+    if (hiddenTab) return;
+    let raf = 0;
+    let last = performance.now();
 
-    const id = window.setInterval(() => {
-      const now = Date.now();
-      const gap = chaos ? 5000 : 9000;
-      if (now - lastChaos.current < gap) return;
-      if (Math.random() > (chaos ? 0.5 : 0.28)) return;
-      lastChaos.current = now;
+    const tick = (now: number) => {
+      const dt = Math.min(0.033, (now - last) / 1000);
+      last = now;
+      const b = bounds();
 
-      const roll = Math.random();
-      if (roll < 0.35 && windows.terminal.open) {
-        draggedAway.current = false;
-        snapToPerch();
-        trySetState("idle", true);
-        say("back on my perch");
-      } else if (roll < 0.55) {
-        draggedAway.current = true;
-        setPerching(false);
-        moveTo(
-          Math.random() * (viewport.width - size),
-          STATUS + 40 + Math.random() * 120,
-          "hop"
-        );
-        say("zoomies");
-      } else if (roll < 0.7) {
-        trySetState("sleep");
-        say("power nap…");
-      } else {
-        say(QUIPS[Math.floor(Math.random() * QUIPS.length)]);
+      if (paused || reducedMotion) {
+        setRenderPos({ ...bodyRef.current.pos });
+        raf = requestAnimationFrame(tick);
+        return;
       }
-    }, 3500);
 
-    return () => {
-      clearInterval(id);
-      clearTimers();
+      if (modeRef.current === "drag") {
+        setSquashY(1.08);
+        setRenderPos({ ...bodyRef.current.pos });
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+
+      if (modeRef.current === "dance") {
+        danceT.current += dt;
+        setDancePhase((danceT.current % 0.7) / 0.7);
+        const bob = Math.sin(danceT.current * 14) * 10;
+        setSquashY(0.9 + Math.sin(danceT.current * 12) * 0.12);
+        setRenderPos({
+          x: bodyRef.current.pos.x,
+          y: bodyRef.current.pos.y + bob,
+        });
+        trySetState("dance");
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+
+      if (modeRef.current === "sleep") {
+        setSquashY(1.05);
+        setGaitPhase(0);
+        trySetState("sleep");
+        // soft settle onto perch/floor
+        bodyRef.current = integrate(
+          { ...bodyRef.current, vel: { x: 0, y: bodyRef.current.vel.y } },
+          dt,
+          b
+        );
+        setRenderPos({ ...bodyRef.current.pos });
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+
+      // Autonomous decisions
+      const gap = chaos ? 4200 : 8000;
+      if (now - lastDecision.current > gap && modeRef.current !== "flee") {
+        lastDecision.current = now;
+        if (Math.random() < (chaos ? 0.55 : 0.32)) {
+          const marks = readLandmarks(viewport.width, viewport.height, size);
+          const roll = Math.random();
+          if (roll < 0.35 && windows.terminal.open) {
+            const p = perchOnTerminal();
+            if (p) {
+              modeRef.current = "chase";
+              targetRef.current = p;
+              trySetState("walk");
+              say("back to my perch");
+            }
+          } else if (roll < 0.55) {
+            const floor = marks.filter((m) => m.kind === "floor" || m.kind === "dock");
+            const pick = floor[Math.floor(Math.random() * floor.length)];
+            if (pick) {
+              modeRef.current = "chase";
+              targetRef.current = { x: pick.x, y: pick.y };
+              trySetState("walk");
+            }
+          } else if (roll < 0.7) {
+            const hide = marks.filter((m) => m.kind === "hide");
+            const pick = hide[Math.floor(Math.random() * hide.length)];
+            if (pick) {
+              modeRef.current = "chase";
+              targetRef.current = { x: pick.x, y: pick.y };
+              trySetState("hide");
+              say("you'll never find me");
+            }
+          } else if (roll < 0.85) {
+            modeRef.current = "sleep";
+            say("power nap…");
+            trySetState("sleep");
+          } else {
+            say(QUIPS[Math.floor(Math.random() * QUIPS.length)]);
+          }
+        }
+      }
+
+      let body = bodyRef.current;
+
+      if (targetRef.current && (modeRef.current === "chase" || modeRef.current === "flee" || modeRef.current === "wander")) {
+        const target = targetRef.current;
+        const speed = modeRef.current === "flee" ? 420 : chaos ? 280 : 200;
+        const dx = target.x - body.pos.x;
+        const dy = target.y - body.pos.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist < 18) {
+          body = {
+            pos: { ...target },
+            vel: { x: 0, y: 0 },
+            grounded: true,
+          };
+          if (modeRef.current === "flee") {
+            modeRef.current = "perch";
+            trySetState("idle", true);
+          } else if (target.y < b.floorY - 40) {
+            modeRef.current = "perch";
+            trySetState("idle", true);
+          } else {
+            modeRef.current = "wander";
+            trySetState("idle", true);
+          }
+          targetRef.current = null;
+          landHold.current = 0.2;
+          setSquashY(1.12);
+        } else {
+          // hop when needing vertical change or for gait flavor
+          const needHop =
+            Math.abs(dy) > 30 ||
+            (body.grounded && Math.random() < dt * 1.8);
+          body = runToward(body, target, speed, dt);
+          if (needHop && body.grounded) {
+            body = jumpImpulse(body, 520 + Math.min(200, Math.abs(dy)));
+            trySetState("hop");
+            setSquashY(0.82);
+            landHold.current = 0;
+          } else if (!body.grounded) {
+            trySetState("hop");
+          } else {
+            trySetState("walk");
+          }
+          setFacing(body.vel.x >= 0 ? 1 : -1);
+          gaitDist.current += Math.abs(body.vel.x) * dt;
+          setGaitPhase((gaitDist.current % 48) / 48);
+        }
+      } else if (modeRef.current === "perch") {
+        const p = perchOnTerminal();
+        if (p && windows.terminal.open && !windows.terminal.minimized) {
+          // spring toward moving perch (window drag)
+          body = {
+            pos: {
+              x: body.pos.x + (p.x - body.pos.x) * Math.min(1, dt * 10),
+              y: body.pos.y + (p.y - body.pos.y) * Math.min(1, dt * 10),
+            },
+            vel: { x: 0, y: 0 },
+            grounded: true,
+          };
+        }
+        trySetState("idle");
+        if (landHold.current > 0) {
+          landHold.current -= dt;
+          setSquashY(1.1);
+        } else {
+          setSquashY(1);
+        }
+      }
+
+      if (modeRef.current !== "perch") {
+        body = integrate(body, dt, b);
+        if (body.grounded && landHold.current <= 0) {
+          const speed = Math.abs(body.vel.x);
+          if (speed > 40) setSquashY(0.92 + Math.sin(gaitDist.current) * 0.04);
+          else setSquashY(1);
+        } else if (!body.grounded) {
+          setSquashY(0.88);
+        }
+        if (body.grounded && body.vel.y === 0 && landHold.current <= 0 && Math.abs(body.vel.y) < 1) {
+          // landing recovery squash flash
+        }
+      }
+
+      bodyRef.current = body;
+      setRenderPos({ ...body.pos });
+      raf = requestAnimationFrame(tick);
     };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [
+    hiddenTab,
     paused,
     reducedMotion,
-    hiddenTab,
+    bounds,
     chaos,
-    state,
-    windows.terminal.open,
     viewport.width,
+    viewport.height,
     size,
-    moveTo,
-    snapToPerch,
+    windows.terminal.open,
+    windows.terminal.minimized,
+    windows.terminal.x,
+    windows.terminal.y,
+    perchOnTerminal,
     trySetState,
     say,
   ]);
 
+  // Terminal command hooks
   useEffect(() => {
     if (!requestCome) return;
-    draggedAway.current = true;
-    setPerching(false);
-    moveTo(viewport.width * 0.45, viewport.height * 0.42, "commanded");
-  }, [requestCome, moveTo, viewport.width, viewport.height]);
+    modeRef.current = "chase";
+    const p = perchOnTerminal() || {
+      x: viewport.width * 0.45,
+      y: viewport.height * 0.4,
+    };
+    targetRef.current = p;
+    trySetState("commanded");
+  }, [requestCome, perchOnTerminal, viewport, trySetState]);
 
   useEffect(() => {
     if (!requestDance) return;
+    modeRef.current = "dance";
+    danceT.current = 0;
     setState("dance");
     const t = window.setTimeout(() => {
+      modeRef.current = "perch";
       trySetState("idle", true);
-      if (!draggedAway.current) snapToPerch();
-    }, 3800);
-    timers.current.push(t);
+      const p = perchOnTerminal();
+      if (p) bodyRef.current.pos = p;
+    }, 4200);
     return () => clearTimeout(t);
-  }, [requestDance, setState, trySetState, snapToPerch]);
+  }, [requestDance, setState, trySetState, perchOnTerminal]);
 
   useEffect(() => {
     if (!requestSleep) return;
+    modeRef.current = "sleep";
     setState("sleep");
   }, [requestSleep, setState]);
 
   const onPointerDown = (e: ReactPointerEvent) => {
     e.stopPropagation();
     e.currentTarget.setPointerCapture(e.pointerId);
+    modeRef.current = "drag";
     setState("dragged");
-    setPerching(false);
-    draggedAway.current = true;
     say("weee!!");
     dragRef.current = {
       px: e.clientX,
       py: e.clientY,
-      ox: posRef.current.x,
-      oy: posRef.current.y,
+      ox: bodyRef.current.pos.x,
+      oy: bodyRef.current.pos.y,
     };
   };
 
@@ -299,75 +440,99 @@ export function ToddStage({ layout, viewport }: Props) {
       b.minY,
       b.maxY
     );
-    x.set(nx);
-    y.set(ny);
-    posRef.current = { x: nx, y: ny };
+    bodyRef.current = {
+      pos: { x: nx, y: ny },
+      vel: { x: e.movementX * 40, y: e.movementY * 40 },
+      grounded: false,
+    };
+    setRenderPos({ x: nx, y: ny });
+    setSquashY(1.1);
   };
 
   const onPointerUp = (e: ReactPointerEvent) => {
     if (!dragRef.current) return;
     dragRef.current = null;
+    modeRef.current = "wander";
     setState("fall");
     say("oof—");
-    const t = window.setTimeout(() => trySetState("idle", true), 320);
-    timers.current.push(t);
+    bodyRef.current = {
+      ...bodyRef.current,
+      grounded: false,
+      vel: {
+        x: bodyRef.current.vel.x,
+        y: Math.max(200, bodyRef.current.vel.y),
+      },
+    };
+    landHold.current = 0.35;
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
     } catch {
       /* ignore */
     }
+    window.setTimeout(() => trySetState("idle", true), 400);
   };
 
   const onClick = () => {
     if (dragRef.current) return;
     const n = bumpClick();
-    if (clickResetTimer.current) clearTimeout(clickResetTimer.current);
-    clickResetTimer.current = window.setTimeout(() => resetClicks(), 2400);
+    if (clickReset.current) clearTimeout(clickReset.current);
+    clickReset.current = window.setTimeout(() => resetClicks(), 2400);
 
     setState("startled");
     say(QUIPS[Math.min(n - 1, QUIPS.length - 1)]);
-    setPerching(false);
-    draggedAway.current = true;
+    setSquashY(0.78);
 
-    moveTo(
-      posRef.current.x + (Math.random() > 0.5 ? 1 : -1) * (70 + n * 18),
-      posRef.current.y - 24 - n * 6,
-      "hop"
-    );
+    // anticipation then flee
+    bodyRef.current = jumpImpulse(bodyRef.current, 680);
+    modeRef.current = "flee";
+    const marks = readLandmarks(viewport.width, viewport.height, size);
+    const options = marks.filter((m) => m.kind === "floor" || m.kind === "hide");
+    const pick = options[Math.floor(Math.random() * options.length)];
+    targetRef.current = pick
+      ? { x: pick.x, y: pick.y }
+      : {
+          x: clamp(
+            bodyRef.current.pos.x + (Math.random() > 0.5 ? 220 : -220),
+            8,
+            viewport.width - size - 8
+          ),
+          y: bounds().floorY,
+        };
 
     if (n >= 4) {
-      setState("dance");
+      modeRef.current = "dance";
       say("OK FINE I'LL DANCE");
-      const t = window.setTimeout(() => {
+      window.setTimeout(() => {
+        modeRef.current = "perch";
         trySetState("idle", true);
         resetClicks();
-      }, 2400);
-      timers.current.push(t);
-    } else {
-      const t = window.setTimeout(() => trySetState("idle", true), 550);
-      timers.current.push(t);
+      }, 2800);
     }
   };
 
   if (hiddenTab) return null;
 
-  const bubbleSide = posRef.current.x > viewport.width * 0.55 ? "left" : "right";
+  const bubbleLeft = renderPos.x > viewport.width * 0.55;
 
   return (
     <div className="pointer-events-none absolute inset-0 z-[70] overflow-hidden">
-      <motion.div
-        className="pointer-events-auto absolute"
-        style={{ x: sx, y: sy, width: size, height: size }}
+      <div
+        className="pointer-events-auto absolute will-change-transform"
+        style={{
+          transform: `translate3d(${renderPos.x}px, ${renderPos.y}px, 0)`,
+          width: size,
+          height: size,
+        }}
       >
         <AnimatePresence>
           {speech && (
             <motion.div
               key={speech}
-              initial={{ opacity: 0, y: 6, scale: 0.95 }}
+              initial={{ opacity: 0, y: 8, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 4 }}
-              className={`absolute z-10 max-w-[190px] rounded-xl border border-white/20 bg-black/80 px-3 py-2.5 font-mono text-[11px] leading-snug text-zinc-100 shadow-[0_8px_32px_rgba(0,0,0,0.55)] backdrop-blur-md ${
-                bubbleSide === "left" ? "right-[78%] top-2" : "left-[78%] top-2"
+              className={`absolute z-10 max-w-[200px] rounded-xl border border-white/20 bg-black/85 px-3.5 py-2.5 font-mono text-xs leading-snug text-zinc-100 shadow-2xl backdrop-blur-md ${
+                bubbleLeft ? "right-[75%] top-1" : "left-[75%] top-1"
               }`}
               style={{ translateY: "-100%" }}
             >
@@ -380,19 +545,14 @@ export function ToddStage({ layout, viewport }: Props) {
                   <span key={i}>{part}</span>
                 )
               )}
-              <span
-                className={`absolute top-full h-0 w-0 border-x-[6px] border-t-[6px] border-x-transparent border-t-black/70 ${
-                  bubbleSide === "left" ? "right-4" : "left-4"
-                }`}
-              />
             </motion.div>
           )}
         </AnimatePresence>
 
         <button
           type="button"
-          aria-label="Todd the frog. Click to play, drag to move, or try todd dance in the terminal."
-          className="touch-none outline-none focus-visible:ring-2 focus-visible:ring-[var(--os-lime)]"
+          aria-label="Todd the frog. Click to startle, drag to move, or try todd dance in the terminal."
+          className="touch-none cursor-grab border-0 bg-transparent p-0 outline-none ring-0 active:cursor-grabbing focus:outline-none focus-visible:outline-none"
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -401,12 +561,15 @@ export function ToddStage({ layout, viewport }: Props) {
           <ToddRig
             state={paused ? "idle" : state}
             facing={facing}
-            lookTilt={lookTilt}
+            look={look}
+            gaitPhase={gaitPhase}
+            dancePhase={dancePhase}
+            squashY={squashY}
             reducedMotion={reducedMotion || paused}
             size={size}
           />
         </button>
-      </motion.div>
+      </div>
     </div>
   );
 }
