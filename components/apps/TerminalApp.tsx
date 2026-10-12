@@ -22,7 +22,6 @@ export function TerminalApp() {
     { type: "sys", text: `Welcome to MOOSA.OS v${PROFILE.osVersion}` },
     { type: "dim", text: "An interactive developer portfolio." },
     { type: "dim", text: "Type 'help' to get started." },
-    { type: "dim", text: "" },
   ]);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -31,7 +30,7 @@ export function TerminalApp() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: "end" });
+    bottomRef.current?.scrollIntoView({ block: "nearest" });
   }, [lines]);
 
   const submit = useCallback(
@@ -70,7 +69,8 @@ export function TerminalApp() {
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
-    submit(input);
+    const raw = inputRef.current?.value ?? input;
+    submit(raw);
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -102,69 +102,74 @@ export function TerminalApp() {
 
   return (
     <div
-      className="relative flex h-full min-h-[320px] flex-col font-mono text-[15px] leading-relaxed sm:text-[16px]"
+      className="relative flex h-full min-h-[300px] flex-col font-mono"
       onClick={() => inputRef.current?.focus()}
     >
       <div
-        className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1"
+        className="min-h-0 flex-1 overflow-y-auto"
         role="log"
         aria-live="polite"
         aria-relevant="additions"
       >
-        {lines.map((l, i) => (
-          <pre
-            key={i}
-            className={`whitespace-pre-wrap break-words ${
-              l.type === "in"
-                ? "text-[var(--os-lime)]"
-                : l.type === "sys"
-                  ? "text-[var(--os-lime)] text-[17px] font-medium sm:text-[18px]"
-                  : l.type === "dim"
-                    ? "text-zinc-500"
-                    : "text-[#c6ef6a]"
-            }`}
-          >
-            {l.text}
-          </pre>
-        ))}
-        <div ref={bottomRef} />
-      </div>
+        <div className="space-y-[4px] text-[15px] leading-[1.75] tracking-[-0.015em] sm:text-[16.5px]">
+          {lines.map((l, i) => (
+            <pre
+              key={i}
+              className={`whitespace-pre-wrap break-words ${
+                l.type === "in"
+                  ? "text-[var(--os-lime)]"
+                  : l.type === "sys"
+                    ? "text-[var(--os-lime)]"
+                    : l.type === "dim"
+                      ? "text-white/70"
+                      : "text-[var(--os-lime)]/90"
+              }`}
+            >
+              {l.text}
+            </pre>
+          ))}
 
-      <form
-        onSubmit={onSubmit}
-        className="mt-4 flex items-center gap-2.5 border-t border-white/10 pt-4"
-      >
-        <span className="shrink-0 text-[var(--os-lime)]" aria-hidden>
-          todd@moosa:~$
-        </span>
-        <label htmlFor="moosa-terminal-input" className="sr-only">
-          Terminal command
-        </label>
-        <input
-          id="moosa-terminal-input"
-          ref={inputRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={onKeyDown}
-          autoComplete="off"
-          spellCheck={false}
-          autoFocus
-          className="min-w-0 flex-1 bg-transparent text-[var(--os-lime)] outline-none caret-[var(--os-lime)] placeholder:text-zinc-600"
-          aria-label="Terminal command input"
-        />
-        <span
-          className="animate-cursor-blink h-[1.1em] w-2.5 bg-[var(--os-lime)]"
-          aria-hidden
-        />
-      </form>
+          <form
+            onSubmit={onSubmit}
+            className="flex items-center gap-2.5 pt-2.5"
+          >
+            <span className="shrink-0 text-[var(--os-lime)]" aria-hidden>
+              todd@moosa:~$
+            </span>
+            <label htmlFor="moosa-terminal-input" className="sr-only">
+              Terminal command
+            </label>
+            <input
+              id="moosa-terminal-input"
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={onKeyDown}
+              autoComplete="off"
+              spellCheck={false}
+              autoFocus
+              className="min-w-0 flex-1 bg-transparent text-[var(--os-lime)] caret-transparent outline-none"
+              aria-label="Terminal command input"
+            />
+            {!input && (
+              <span
+                className="animate-cursor-blink -ml-2.5 h-[1.15em] w-[0.55em] shrink-0 rounded-[1px] bg-white"
+                aria-hidden
+              />
+            )}
+          </form>
+          <div ref={bottomRef} />
+        </div>
+      </div>
 
       <button
         type="button"
-        onClick={() => {
+        onClick={(e) => {
+          e.stopPropagation();
           say("that's me!! click · drag · todd dance");
           toddCommand("come");
         }}
-        className="absolute bottom-2 right-2 text-sm text-zinc-500 transition hover:text-[var(--os-lime)]"
+        className="absolute bottom-0 right-0 font-sans text-[11px] tracking-wide text-white/30 transition hover:text-[var(--os-lime)]"
         data-todd-safe
       >
         meet todd →
