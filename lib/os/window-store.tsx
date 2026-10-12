@@ -33,14 +33,14 @@ type WindowStore = {
 const WindowContext = createContext<WindowStore | null>(null);
 
 function centerTerminal(vw: number, vh: number) {
-  // Mockup-like hero terminal: large, readable, intentionally composed
-  const width = Math.min(920, Math.max(560, vw * 0.68));
-  const height = Math.min(560, Math.max(360, vh * 0.58));
+  // Hero pane: wide, tall enough to own the first viewport
+  const width = Math.min(920, Math.max(620, vw * 0.6));
+  const height = Math.min(520, Math.max(360, vh * 0.52));
   return {
     width: Math.round(width),
     height: Math.round(height),
-    x: Math.round((vw - width) / 2),
-    y: Math.round(Math.max(64, (vh - height) / 2 - 12)),
+    x: Math.round((vw - width) / 2 - vw * 0.02),
+    y: Math.round(Math.max(72, vh * 0.14)),
   };
 }
 
