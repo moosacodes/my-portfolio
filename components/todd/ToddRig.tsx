@@ -1,185 +1,141 @@
 "use client";
 
-import {
-  motion,
-  useMotionValue,
-  useSpring,
-  useTransform,
-  type MotionValue,
-} from "framer-motion";
-import { useEffect, useRef } from "react";
+import { motion, useMotionValueEvent, useSpring } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 import type { ToddState } from "@/lib/todd/types";
 
 type Props = {
   state: ToddState;
   facing: 1 | -1;
-  pupilTarget: { x: number; y: number };
+  lookTilt: { x: number; y: number };
   reducedMotion: boolean;
   size?: number;
 };
 
 /**
- * Layered Todd rig over the canonical transparent PNG.
- * Pupils, blink lids, bow bob, and body squash are independent layers.
- * Limitation: single source pose — articulation is overlay-based, not multi-pose.
+ * Fun Todd over the canonical transparent PNG.
+ * Keeps the artwork intact — personality from bounce, lean, squash, spin, sparkles.
  */
 export function ToddRig({
   state,
   facing,
-  pupilTarget,
+  lookTilt,
   reducedMotion,
-  size = 88,
+  size = 120,
 }: Props) {
-  const blink = useMotionValue(0);
-  const squash = useSpring(1, { stiffness: 280, damping: 18 });
-  const bowRot = useSpring(0, { stiffness: 120, damping: 10 });
-  const bodyY = useSpring(0, { stiffness: 200, damping: 16 });
-  const wiggle = useSpring(0, { stiffness: 400, damping: 12 });
-
-  const pupilX = useSpring(0, { stiffness: 180, damping: 20 });
-  const pupilY = useSpring(0, { stiffness: 180, damping: 20 });
-  const pupilXRight = useTransform(pupilX, (v) => v * 0.9);
-
-  const lidHeight = useTransform(blink, [0, 1], ["0%", "55%"]);
-  const scaleY = squash;
-  const scaleX = useTransform(squash, (v) => 2 - v);
-
+  const squash = useSpring(1, { stiffness: 260, damping: 16 });
+  const [scaleX, setScaleX] = useState(1);
+  const bodyY = useSpring(0, { stiffness: 180, damping: 14 });
+  const rot = useSpring(0, { stiffness: 160, damping: 12 });
+  const bob = useSpring(0, { stiffness: 80, damping: 10 });
   const danceRef = useRef<number | null>(null);
+  const idleRef = useRef<number | null>(null);
+
+  useMotionValueEvent(squash, "change", (v) => setScaleX(2 - v));
 
   useEffect(() => {
     if (reducedMotion) {
-      pupilX.set(0);
-      pupilY.set(0);
+      rot.set(0);
       return;
     }
-    pupilX.set(Math.max(-4, Math.min(4, pupilTarget.x)));
-    pupilY.set(Math.max(-3, Math.min(3, pupilTarget.y)));
-  }, [pupilTarget.x, pupilTarget.y, pupilX, pupilY, reducedMotion]);
+    rot.set(lookTilt.x * 5);
+  }, [lookTilt.x, rot, reducedMotion]);
 
   useEffect(() => {
-    if (reducedMotion) return;
-    if (state === "blink") {
-      blink.set(1);
-      const t = window.setTimeout(() => blink.set(0), 120);
-      return () => clearTimeout(t);
-    }
-    if (state !== "sleep") blink.set(0);
-  }, [state, blink, reducedMotion]);
+    if (danceRef.current) cancelAnimationFrame(danceRef.current);
+    if (idleRef.current) cancelAnimationFrame(idleRef.current);
+    danceRef.current = null;
+    idleRef.current = null;
 
-  useEffect(() => {
     if (reducedMotion) {
       squash.set(1);
       bodyY.set(0);
-      bowRot.set(0);
-      wiggle.set(0);
+      bob.set(0);
       return;
-    }
-
-    if (danceRef.current) {
-      cancelAnimationFrame(danceRef.current);
-      danceRef.current = null;
     }
 
     switch (state) {
       case "hop":
       case "walk":
       case "commanded":
-        squash.set(0.88);
-        bodyY.set(-10);
-        bowRot.set(8);
+        squash.set(0.9);
+        bodyY.set(-16);
         break;
       case "fall":
-        squash.set(1.15);
-        bodyY.set(6);
+        squash.set(1.12);
+        bodyY.set(8);
         break;
       case "startled":
-        squash.set(0.8);
-        bodyY.set(-14);
-        wiggle.set(8);
-        bowRot.set(-12);
+        squash.set(0.82);
+        bodyY.set(-22);
         break;
       case "dragged":
-        squash.set(1.08);
-        wiggle.set(14);
-        bowRot.set(18);
+        squash.set(1.06);
         break;
       case "dance": {
         let frame = 0;
         const loop = () => {
           frame++;
-          squash.set(0.92 + Math.sin(frame / 4) * 0.1);
-          bodyY.set(Math.sin(frame / 3) * -12);
-          bowRot.set(Math.sin(frame / 2) * 22);
-          wiggle.set(Math.sin(frame / 2.5) * 10);
+          squash.set(0.9 + Math.sin(frame / 3.5) * 0.12);
+          bodyY.set(Math.sin(frame / 2.8) * -16);
+          rot.set(Math.sin(frame / 2.2) * 18);
           danceRef.current = requestAnimationFrame(loop);
         };
         danceRef.current = requestAnimationFrame(loop);
         break;
       }
       case "sleep":
-        squash.set(1.06);
-        bodyY.set(4);
-        bowRot.set(-4);
-        blink.set(1);
+        squash.set(1.05);
+        bodyY.set(6);
+        rot.set(-8);
         break;
       case "hide":
-        bodyY.set(8);
-        squash.set(0.95);
+        bodyY.set(14);
+        squash.set(0.92);
         break;
-      default:
+      default: {
         squash.set(1);
         bodyY.set(0);
-        bowRot.set(0);
-        wiggle.set(0);
+        let frame = 0;
+        const loop = () => {
+          frame++;
+          bob.set(Math.sin(frame / 28) * 5);
+          idleRef.current = requestAnimationFrame(loop);
+        };
+        idleRef.current = requestAnimationFrame(loop);
+      }
     }
 
     return () => {
       if (danceRef.current) cancelAnimationFrame(danceRef.current);
+      if (idleRef.current) cancelAnimationFrame(idleRef.current);
     };
-  }, [state, reducedMotion, squash, bodyY, bowRot, wiggle, blink]);
-
-  useEffect(() => {
-    if (reducedMotion || state === "sleep" || state === "dragged") return;
-    let cancelled = false;
-    let timeout: number;
-
-    const schedule = () => {
-      timeout = window.setTimeout(
-        () => {
-          if (cancelled) return;
-          blink.set(1);
-          window.setTimeout(() => {
-            if (!cancelled) blink.set(0);
-            schedule();
-          }, 140);
-        },
-        2800 + Math.random() * 3200
-      );
-    };
-    schedule();
-    return () => {
-      cancelled = true;
-      clearTimeout(timeout);
-    };
-  }, [state, blink, reducedMotion]);
+  }, [state, reducedMotion, squash, bodyY, rot, bob]);
 
   const sleeping = state === "sleep";
+  const hype =
+    state === "dance" || state === "startled" || state === "hop";
 
   return (
     <motion.div
-      className="relative select-none"
+      className="relative select-none drop-shadow-[0_12px_28px_rgba(0,0,0,0.55)]"
       style={{
         width: size,
         height: size,
         scaleX: facing,
         y: bodyY,
-        rotate: wiggle,
+        rotate: rot,
       }}
       aria-hidden
     >
       <motion.div
         className="relative h-full w-full"
-        style={{ scaleX, scaleY, transformOrigin: "50% 90%" }}
+        style={{
+          scaleY: squash,
+          scaleX,
+          y: bob,
+          transformOrigin: "50% 92%",
+        }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -188,69 +144,30 @@ export function ToddRig({
           draggable={false}
           className="pointer-events-none h-full w-full object-contain"
         />
-
-        {!sleeping && (
-          <>
-            <EyeOverlay
-              left="28%"
-              pupilX={pupilX}
-              pupilY={pupilY}
-              lidHeight={lidHeight}
-            />
-            <EyeOverlay
-              left="54%"
-              pupilX={pupilXRight}
-              pupilY={pupilY}
-              lidHeight={lidHeight}
-            />
-          </>
-        )}
-
-        <motion.div
-          className="pointer-events-none absolute left-1/2 top-[62%] h-[10%] w-[22%] -translate-x-1/2"
-          style={{ rotate: bowRot }}
-        >
-          <div className="h-full w-full rounded-sm bg-black/90 shadow-sm" />
-        </motion.div>
       </motion.div>
 
+      {hype && !reducedMotion && (
+        <>
+          <span
+            className="absolute -top-1 left-[20%] h-3 w-0.5 rotate-12 rounded-full bg-white/90"
+            style={{ animation: "todd-sparkle 0.7s ease-in-out infinite" }}
+          />
+          <span
+            className="absolute -top-2 left-1/2 h-4 w-0.5 rounded-full bg-white/90"
+            style={{ animation: "todd-sparkle 0.7s ease-in-out 0.1s infinite" }}
+          />
+          <span
+            className="absolute -top-1 right-[22%] h-3 w-0.5 -rotate-12 rounded-full bg-white/90"
+            style={{ animation: "todd-sparkle 0.7s ease-in-out 0.2s infinite" }}
+          />
+        </>
+      )}
+
       {sleeping && (
-        <span className="absolute -right-1 top-0 text-xs text-zinc-400">
+        <span className="absolute -right-2 top-0 font-mono text-xs text-zinc-400">
           zzz
         </span>
       )}
     </motion.div>
-  );
-}
-
-function EyeOverlay({
-  left,
-  pupilX,
-  pupilY,
-  lidHeight,
-}: {
-  left: string;
-  pupilX: MotionValue<number>;
-  pupilY: MotionValue<number>;
-  lidHeight: MotionValue<string>;
-}) {
-  return (
-    <div
-      className="pointer-events-none absolute overflow-hidden rounded-full"
-      style={{ left, top: "16%", width: "20%", height: "20%" }}
-    >
-      {/* Replace baked-in pupils with a live eyeball layer */}
-      <div className="absolute inset-0 rounded-full bg-white shadow-inner" />
-      <motion.div
-        className="absolute left-1/2 top-1/2 h-[48%] w-[48%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-black"
-        style={{ x: pupilX, y: pupilY }}
-      >
-        <span className="absolute right-[16%] top-[12%] h-[30%] w-[30%] rounded-full bg-white" />
-      </motion.div>
-      <motion.div
-        className="absolute inset-x-0 top-0 bg-[#7CFC00]"
-        style={{ height: lidHeight }}
-      />
-    </div>
   );
 }
