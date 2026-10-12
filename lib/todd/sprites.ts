@@ -9,29 +9,19 @@ export type ToddPose =
   | "dance"
   | "sleep";
 
+/** Canonical resting art is always todd-original.png (exact supplied asset). */
+export const TODD_CANONICAL = "/todd/todd-original.png";
+
 export const TODD_SPRITES: Record<ToddPose, string> = {
-  idle: "/todd/todd-original.png",
+  idle: TODD_CANONICAL,
   walkA: "/todd/todd-walk-a.png",
   walkB: "/todd/todd-walk-b.png",
   jump: "/todd/todd-jump.png",
-  startled: "/todd/todd-startled.png",
-  dance: "/todd/todd-dance.png",
-  sleep: "/todd/todd-original.png", // sleep uses lids on idle art (generated sleep drifted)
+  // Missing pose sheets fall back to the canonical PNG — never invent a redraw
+  startled: TODD_CANONICAL,
+  dance: TODD_CANONICAL,
+  sleep: TODD_CANONICAL,
 };
-
-/** Eye socket landmarks as % of the square sprite (tuned to todd-original). */
-export const EYE_LAYOUT = {
-  left: { x: 28, y: 16, w: 20, h: 20 },
-  right: { x: 52, y: 16, w: 20, h: 20 },
-  maxPupil: 3.2,
-} as const;
-
-export const BOW_LAYOUT = {
-  x: 39,
-  y: 58,
-  w: 22,
-  h: 12,
-} as const;
 
 export function poseForState(
   state: ToddState,
