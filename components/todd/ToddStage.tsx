@@ -11,12 +11,18 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ToddRig } from "@/components/todd/ToddRig";
 import { useTodd } from "@/lib/todd/todd-store";
 import { useWindows } from "@/lib/os/window-store";
+import { ALL_APPS, type AppId } from "@/lib/portfolio/data";
 import {
   clamp,
+  dist,
   integrate,
   jumpImpulse,
+  jumpPowerForHeight,
+  pickLandmark,
   readLandmarks,
-  runToward,
+  readPlatforms,
+  steerX,
+  type Landmark,
   type PhysicsBody,
 } from "@/lib/todd/physics";
 
@@ -25,9 +31,20 @@ type Props = {
   viewport: { width: number; height: number };
 };
 
+type Mode =
+  | "idle"
+  | "travel"
+  | "startled"
+  | "flee"
+  | "hide"
+  | "sleep"
+  | "dance"
+  | "drag"
+  | "fall";
+
 const SIZE_DESKTOP = 152;
 const SIZE_MOBILE = 88;
-const STATUS = 48;
+const STATUS = 44;
 const DOCK = 108;
 
 const QUIPS = [
@@ -38,6 +55,16 @@ const QUIPS = [
   "again??",
   "type todd dance",
   "i saw that cursor",
+  "nice try",
+  "catch me!!",
+];
+
+const SURPRISES = [
+  "psst",
+  "did you see that?",
+  "i live here now",
+  "moosa said i could",
+  "beep boop",
 ];
 
 export function ToddStage({ layout, viewport }: Props) {
@@ -64,6 +91,7 @@ export function ToddStage({ layout, viewport }: Props) {
   const [gaitPhase, setGaitPhase] = useState(0);
   const [dancePhase, setDancePhase] = useState(0);
   const [squashY, setSquashY] = useState(1);
+  const [hidePeek, setHidePeek] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [hiddenTab, setHiddenTab] = useState(false);
   const [renderPos, setRenderPos] = useState({
@@ -76,25 +104,42 @@ export function ToddStage({ layout, viewport }: Props) {
     vel: { x: 0, y: 0 },
     grounded: false,
   });
-  const modeRef = useRef<
-    "perch" | "wander" | "chase" | "flee" | "sleep" | "dance" | "drag"
-  >("perch");
-  const targetRef = useRef<{ x: number; y: number } | null>(null);
+  const modeRef = useRef<Mode>("idle");
+  const targetRef = useRef<Landmark | null>(null);
+  const lastLandmarkId = useRef<string | null>(null);
+  const lastDecision = useRef(0);
+  const nextDecisionAt = useRef(0);
+  const startledUntil = useRef(0);
+  const modeUntil = useRef(0);
+  const idleSince = useRef(0);
+  const gaitDist = useRef(0);
+  const danceT = useRef(0);
+  const landHold = useRef(0);
+  const hopCooldown = useRef(0);
+  const travelPhase = useRef<"run" | "jump" | "leap">("run");
+  const leapRef = useRef<{
+    from: { x: number; y: number };
+    to: { x: number; y: number };
+    t: number;
+    dur: number;
+  } | null>(null);
   const dragRef = useRef<{
     px: number;
     py: number;
     ox: number;
     oy: number;
+    samples: { t: number; x: number; y: number }[];
   } | null>(null);
   const clickReset = useRef<number | null>(null);
-  const lastDecision = useRef(0);
-  const gaitDist = useRef(0);
-  const danceT = useRef(0);
   const prevFocused = useRef(focused);
-  const landHold = useRef(0);
+  const pointerDownAt = useRef(0);
+  const dragged = useRef(false);
+  const cursorRef = useRef({ x: 0, y: 0 });
+  const bootedRef = useRef(false);
 
   const bounds = useCallback(() => {
-    const floorY = viewport.height - DOCK - size * 0.15;
+    // floorY = Todd top-left when standing; keep full sprite above the dock
+    const floorY = Math.max(STATUS + 8, viewport.height - DOCK - size + 6);
     return {
       minX: 8,
       maxX: Math.max(8, viewport.width - size - 8),
@@ -104,14 +149,37 @@ export function ToddStage({ layout, viewport }: Props) {
     };
   }, [viewport.width, viewport.height, size]);
 
-  const perchOnTerminal = useCallback(() => {
+  const terminalPerch = useCallback((): Landmark | null => {
     const marks = readLandmarks(viewport.width, viewport.height, size);
-    const perch =
+    return (
       marks.find((m) => m.id === "perch-terminal") ||
-      marks.find((m) => m.kind === "perch");
-    if (!perch) return null;
-    return { x: perch.x, y: perch.y };
+      marks.find((m) => m.kind === "perch") ||
+      null
+    );
   }, [viewport.width, viewport.height, size]);
+
+  const beginTravel = useCallback(
+    (mark: Landmark, mode: Mode = "travel", quip?: string) => {
+      if (modeRef.current === "drag") return;
+      targetRef.current = mark;
+      lastLandmarkId.current = mark.id;
+      modeRef.current = mode;
+      travelPhase.current = "run";
+      hopCooldown.current = 0;
+      leapRef.current = null;
+      modeUntil.current = 0;
+      if (quip) say(quip);
+      trySetState(
+        mode === "flee"
+          ? "startled"
+          : mark.kind === "hide"
+            ? "hide"
+            : "walk",
+        true
+      );
+    },
+    [say, trySetState]
+  );
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -127,49 +195,141 @@ export function ToddStage({ layout, viewport }: Props) {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
-  // Boot onto terminal perch
+  // Boot on terminal perch
   useEffect(() => {
-    const p = perchOnTerminal();
+    const p = terminalPerch();
     if (!p) return;
     bodyRef.current = {
-      pos: p,
+      pos: { x: p.x, y: p.y },
       vel: { x: 0, y: 0 },
       grounded: true,
+      platformId: p.platformId ?? "window-terminal",
     };
-    setRenderPos(p);
-    modeRef.current = "perch";
+    setRenderPos({ x: p.x, y: p.y });
+    modeRef.current = "idle";
     setFacing(-1);
-  }, [perchOnTerminal]);
+    idleSince.current = performance.now();
+    // Hold the hero perch longer so first paint isn't Todd on the dock
+    nextDecisionAt.current = performance.now() + 14000;
+    bootedRef.current = true;
+  }, [terminalPerch]);
 
-  // React to newly focused windows
+  const prevOpenRef = useRef<Partial<Record<AppId, boolean>>>({});
+
+  // Window open / close / focus — same Todd instance reacts to desktop chrome
   useEffect(() => {
-    if (prevFocused.current !== focused && focused && focused !== "terminal") {
-      if (!paused && !reducedMotion && modeRef.current !== "drag") {
-        const marks = readLandmarks(viewport.width, viewport.height, size);
-        const perch = marks.find((m) => m.id === `perch-${focused}`);
-        if (perch && Math.random() < 0.7) {
-          modeRef.current = "chase";
-          targetRef.current = { x: perch.x, y: perch.y };
-          trySetState("walk");
-          say("oooh new window");
+    if (paused || reducedMotion) return;
+
+    for (const id of ALL_APPS) {
+      const w = windows[id];
+      const isOpen = Boolean(w?.open && !w?.minimized);
+      const wasOpen = Boolean(prevOpenRef.current[id]);
+
+      // Closed or minimized under him → fall off
+      if (wasOpen && !isOpen) {
+        if (bodyRef.current.platformId === `window-${id}`) {
+          leapRef.current = null;
+          targetRef.current = null;
+          modeRef.current = "fall";
+          bodyRef.current = {
+            ...bodyRef.current,
+            grounded: false,
+            platformId: null,
+            vel: {
+              x: bodyRef.current.vel.x * 0.4,
+              y: Math.max(120, bodyRef.current.vel.y),
+            },
+          };
+          setState("fall");
+          say("hey— my perch!!");
+          nextDecisionAt.current = performance.now() + 3500;
         }
       }
-    }
-    prevFocused.current = focused;
-  }, [focused, paused, reducedMotion, viewport, size, trySetState, say]);
 
-  // Cursor look
+      // Freshly opened (non-terminal) → investigate
+      if (!wasOpen && isOpen && id !== "terminal") {
+        if (
+          modeRef.current !== "drag" &&
+          modeRef.current !== "startled" &&
+          modeRef.current !== "dance" &&
+          Math.random() < (chaos ? 0.92 : 0.8)
+        ) {
+          const marks = readLandmarks(viewport.width, viewport.height, size);
+          const perch = marks.find((m) => m.id === `perch-${id}`);
+          if (perch) {
+            beginTravel(perch, "travel", "oooh new window");
+            nextDecisionAt.current = performance.now() + 10000;
+          }
+        }
+      }
+
+      prevOpenRef.current[id] = isOpen;
+    }
+  }, [
+    windows,
+    paused,
+    reducedMotion,
+    chaos,
+    viewport.width,
+    viewport.height,
+    size,
+    beginTravel,
+    setState,
+    say,
+  ]);
+
+  // Focus change (already-open window brought forward)
+  useEffect(() => {
+    if (prevFocused.current === focused) return;
+    const prev = prevFocused.current;
+    prevFocused.current = focused;
+    if (!focused || focused === "terminal" || focused === prev) return;
+    if (paused || reducedMotion) return;
+    if (
+      modeRef.current === "drag" ||
+      modeRef.current === "startled" ||
+      modeRef.current === "dance"
+    ) {
+      return;
+    }
+    // Skip if open-effect already sent him there this tick
+    if (targetRef.current?.id === `perch-${focused}`) return;
+    if (Math.random() > (chaos ? 0.7 : 0.45)) return;
+
+    const marks = readLandmarks(viewport.width, viewport.height, size);
+    const perch = marks.find((m) => m.id === `perch-${focused}`);
+    if (perch) {
+      beginTravel(perch, "travel", "what's this?");
+      nextDecisionAt.current = performance.now() + 9000;
+    }
+  }, [
+    focused,
+    paused,
+    reducedMotion,
+    chaos,
+    viewport.width,
+    viewport.height,
+    size,
+    beginTravel,
+  ]);
+
+  // Cursor tracking (eyes + idle facing)
   useEffect(() => {
     if (reducedMotion || paused || hiddenTab) return;
     const onMove = (e: MouseEvent) => {
+      cursorRef.current = { x: e.clientX, y: e.clientY };
       const b = bodyRef.current.pos;
       const cx = b.x + size / 2;
-      const cy = b.y + size * 0.3;
+      const cy = b.y + size * 0.28;
       setLook({
-        x: clamp((e.clientX - cx) / 90, -1, 1),
-        y: clamp((e.clientY - cy) / 90, -1, 1),
+        x: clamp((e.clientX - cx) / 100, -1, 1),
+        y: clamp((e.clientY - cy) / 100, -1, 1),
       });
-      if (modeRef.current === "perch" || modeRef.current === "sleep") {
+      if (
+        modeRef.current === "idle" ||
+        modeRef.current === "sleep" ||
+        modeRef.current === "hide"
+      ) {
         setFacing(e.clientX >= cx ? 1 : -1);
       }
     };
@@ -177,25 +337,142 @@ export function ToddStage({ layout, viewport }: Props) {
     return () => window.removeEventListener("mousemove", onMove);
   }, [reducedMotion, paused, hiddenTab, size]);
 
-  // Main simulation loop
+  const decide = useCallback(
+    (now: number) => {
+      if (now < nextDecisionAt.current) return;
+      // Don't interrupt commanded sleep/dance/travel — only idle or peeking
+      if (modeRef.current !== "idle" && modeRef.current !== "hide") {
+        return;
+      }
+
+      const marks = readLandmarks(viewport.width, viewport.height, size);
+      const from = bodyRef.current.pos;
+      const roll = Math.random();
+      const chaosBoost = chaos ? 0.22 : 0;
+      const cool = (base: number) => now + (chaos ? base * 0.55 : base);
+
+      // Weighted autonomous brain — chaos = more frequent + spicier picks
+      if (roll < 0.3 + chaosBoost) {
+        const mark = pickLandmark(marks, {
+          prefer: ["floor", "wander", "dock"],
+          avoidId: lastLandmarkId.current,
+          from,
+          minDist: 120,
+        });
+        if (mark) {
+          beginTravel(mark, "travel");
+          nextDecisionAt.current = cool(9000);
+          return;
+        }
+      }
+
+      if (roll < 0.55 + chaosBoost) {
+        const mark = pickLandmark(marks, {
+          prefer: ["perch"],
+          avoidId: lastLandmarkId.current,
+          from,
+          minDist: 80,
+        });
+        if (mark) {
+          beginTravel(
+            mark,
+            "travel",
+            Math.random() < 0.45 ? "up we go" : undefined
+          );
+          nextDecisionAt.current = cool(10000);
+          return;
+        }
+      }
+
+      if (roll < 0.72 + chaosBoost) {
+        const mark = pickLandmark(marks, {
+          prefer: ["hide"],
+          avoidId: lastLandmarkId.current,
+        });
+        if (mark) {
+          beginTravel(mark, "travel", "you'll never find me");
+          nextDecisionAt.current = cool(11000);
+          return;
+        }
+      }
+
+      if (roll < 0.82) {
+        modeRef.current = "sleep";
+        modeUntil.current = now + 5000 + Math.random() * 6000;
+        trySetState("sleep", true);
+        say("power nap…");
+        nextDecisionAt.current = cool(14000);
+        return;
+      }
+
+      if (roll < 0.92) {
+        say(SURPRISES[Math.floor(Math.random() * SURPRISES.length)]);
+        trySetState("look", true);
+        nextDecisionAt.current = cool(8000);
+        return;
+      }
+
+      const home = terminalPerch();
+      if (home) {
+        beginTravel(home, "travel", "back to my perch");
+        nextDecisionAt.current = cool(12000);
+      } else {
+        nextDecisionAt.current = cool(8000);
+      }
+    },
+    [
+      viewport.width,
+      viewport.height,
+      size,
+      chaos,
+      beginTravel,
+      trySetState,
+      say,
+      terminalPerch,
+    ]
+  );
+
+  // Main simulation
   useEffect(() => {
     if (hiddenTab) return;
     let raf = 0;
     let last = performance.now();
 
     const tick = (now: number) => {
-      const dt = Math.min(0.033, (now - last) / 1000);
+      const dt = Math.min(0.034, (now - last) / 1000);
       last = now;
       const b = bounds();
+      const platforms = readPlatforms(viewport.width, viewport.height, size);
 
       if (paused || reducedMotion) {
         setRenderPos({ ...bodyRef.current.pos });
+        setHidePeek(0);
         raf = requestAnimationFrame(tick);
         return;
       }
 
+      // Drag: position set by pointer handlers
       if (modeRef.current === "drag") {
-        setSquashY(1.08);
+        const wiggle = Math.sin(now / 40) * 3;
+        setSquashY(1.12);
+        setRenderPos({
+          x: bodyRef.current.pos.x + wiggle,
+          y: bodyRef.current.pos.y,
+        });
+        trySetState("dragged", true);
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+
+      if (modeRef.current === "startled") {
+        setSquashY(0.78);
+        trySetState("startled", true);
+        if (now >= startledUntil.current) {
+          modeRef.current = "flee";
+          trySetState("hop", true);
+          bodyRef.current = jumpImpulse(bodyRef.current, 740);
+          hopCooldown.current = 0.25;
+        }
         setRenderPos({ ...bodyRef.current.pos });
         raf = requestAnimationFrame(tick);
         return;
@@ -203,161 +480,316 @@ export function ToddStage({ layout, viewport }: Props) {
 
       if (modeRef.current === "dance") {
         danceT.current += dt;
-        setDancePhase((danceT.current % 0.7) / 0.7);
-        const bob = Math.sin(danceT.current * 14) * 10;
-        setSquashY(0.9 + Math.sin(danceT.current * 12) * 0.12);
+        setDancePhase((danceT.current % 0.65) / 0.65);
+        const bob = Math.sin(danceT.current * 14) * 9;
+        setSquashY(0.9 + Math.sin(danceT.current * 12) * 0.1);
+        trySetState("dance", true);
         setRenderPos({
           x: bodyRef.current.pos.x,
           y: bodyRef.current.pos.y + bob,
         });
-        trySetState("dance");
+        if (now > modeUntil.current) {
+          modeRef.current = "idle";
+          trySetState("idle", true);
+          idleSince.current = now;
+          nextDecisionAt.current = now + 6000;
+        }
         raf = requestAnimationFrame(tick);
         return;
       }
 
       if (modeRef.current === "sleep") {
-        setSquashY(1.05);
+        setSquashY(1.06);
         setGaitPhase(0);
-        trySetState("sleep");
-        // soft settle onto perch/floor
-        bodyRef.current = integrate(
-          { ...bodyRef.current, vel: { x: 0, y: bodyRef.current.vel.y } },
-          dt,
-          b
-        );
-        setRenderPos({ ...bodyRef.current.pos });
+        setHidePeek(0);
+        trySetState("sleep", true);
+        // Soft stick to current support; slight settle
+        let body = {
+          ...bodyRef.current,
+          vel: { x: bodyRef.current.vel.x * 0.9, y: bodyRef.current.vel.y },
+        };
+        body = integrate(body, dt, b, platforms, { size });
+        bodyRef.current = body;
+        setRenderPos({ ...body.pos });
+        if (now > modeUntil.current) {
+          modeRef.current = "idle";
+          trySetState("idle", true);
+          say("…huh?");
+          idleSince.current = now;
+          nextDecisionAt.current = now + 5000;
+        }
         raf = requestAnimationFrame(tick);
         return;
       }
 
-      // Autonomous decisions
-      const gap = chaos ? 4200 : 8000;
-      if (now - lastDecision.current > gap && modeRef.current !== "flee") {
-        lastDecision.current = now;
-        if (Math.random() < (chaos ? 0.55 : 0.32)) {
-          const marks = readLandmarks(viewport.width, viewport.height, size);
-          const roll = Math.random();
-          if (roll < 0.35 && windows.terminal.open) {
-            const p = perchOnTerminal();
-            if (p) {
-              modeRef.current = "chase";
-              targetRef.current = p;
-              trySetState("walk");
-              say("back to my perch");
-            }
-          } else if (roll < 0.55) {
-            const floor = marks.filter((m) => m.kind === "floor" || m.kind === "dock");
-            const pick = floor[Math.floor(Math.random() * floor.length)];
-            if (pick) {
-              modeRef.current = "chase";
-              targetRef.current = { x: pick.x, y: pick.y };
-              trySetState("walk");
-            }
-          } else if (roll < 0.7) {
-            const hide = marks.filter((m) => m.kind === "hide");
-            const pick = hide[Math.floor(Math.random() * hide.length)];
-            if (pick) {
-              modeRef.current = "chase";
-              targetRef.current = { x: pick.x, y: pick.y };
-              trySetState("hide");
-              say("you'll never find me");
-            }
-          } else if (roll < 0.85) {
-            modeRef.current = "sleep";
-            say("power nap…");
-            trySetState("sleep");
-          } else {
-            say(QUIPS[Math.floor(Math.random() * QUIPS.length)]);
-          }
-        }
+      // Autonomous decisions while idle/hiding
+      if (
+        modeRef.current === "idle" ||
+        modeRef.current === "hide"
+      ) {
+        decide(now);
       }
 
       let body = bodyRef.current;
+      hopCooldown.current = Math.max(0, hopCooldown.current - dt);
 
-      if (targetRef.current && (modeRef.current === "chase" || modeRef.current === "flee" || modeRef.current === "wander")) {
-        const target = targetRef.current;
-        const speed = modeRef.current === "flee" ? 420 : chaos ? 280 : 200;
-        const dx = target.x - body.pos.x;
-        const dy = target.y - body.pos.y;
-        const dist = Math.hypot(dx, dy);
-
-        if (dist < 18) {
+      // Follow moving perch while idle on a window
+      if (modeRef.current === "idle" && body.platformId?.startsWith("window-")) {
+        const id = body.platformId.replace("window-", "");
+        const marks = readLandmarks(viewport.width, viewport.height, size);
+        const perch = marks.find((m) => m.id === `perch-${id}`);
+        if (perch) {
+          const follow = Math.min(1, dt * 8);
           body = {
-            pos: { ...target },
-            vel: { x: 0, y: 0 },
-            grounded: true,
-          };
-          if (modeRef.current === "flee") {
-            modeRef.current = "perch";
-            trySetState("idle", true);
-          } else if (target.y < b.floorY - 40) {
-            modeRef.current = "perch";
-            trySetState("idle", true);
-          } else {
-            modeRef.current = "wander";
-            trySetState("idle", true);
-          }
-          targetRef.current = null;
-          landHold.current = 0.2;
-          setSquashY(1.12);
-        } else {
-          // hop when needing vertical change or for gait flavor
-          const needHop =
-            Math.abs(dy) > 30 ||
-            (body.grounded && Math.random() < dt * 1.8);
-          body = runToward(body, target, speed, dt);
-          if (needHop && body.grounded) {
-            body = jumpImpulse(body, 520 + Math.min(200, Math.abs(dy)));
-            trySetState("hop");
-            setSquashY(0.82);
-            landHold.current = 0;
-          } else if (!body.grounded) {
-            trySetState("hop");
-          } else {
-            trySetState("walk");
-          }
-          setFacing(body.vel.x >= 0 ? 1 : -1);
-          gaitDist.current += Math.abs(body.vel.x) * dt;
-          setGaitPhase((gaitDist.current % 48) / 48);
-        }
-      } else if (modeRef.current === "perch") {
-        const p = perchOnTerminal();
-        if (p && windows.terminal.open && !windows.terminal.minimized) {
-          // spring toward moving perch (window drag)
-          body = {
+            ...body,
             pos: {
-              x: body.pos.x + (p.x - body.pos.x) * Math.min(1, dt * 10),
-              y: body.pos.y + (p.y - body.pos.y) * Math.min(1, dt * 10),
+              x: body.pos.x + (perch.x - body.pos.x) * follow,
+              y: body.pos.y + (perch.y - body.pos.y) * follow,
             },
             vel: { x: 0, y: 0 },
             grounded: true,
           };
         }
-        trySetState("idle");
         if (landHold.current > 0) {
           landHold.current -= dt;
-          setSquashY(1.1);
+          setSquashY(1.12);
         } else {
           setSquashY(1);
         }
+        // Soft idle anim
+        if (Math.random() < dt * 0.15) trySetState("look");
+        else trySetState("idle");
+        setHidePeek(0);
+        bodyRef.current = body;
+        setRenderPos({ ...body.pos });
+        raf = requestAnimationFrame(tick);
+        return;
       }
 
-      if (modeRef.current !== "perch") {
-        body = integrate(body, dt, b);
-        if (body.grounded && landHold.current <= 0) {
-          const speed = Math.abs(body.vel.x);
-          if (speed > 40) setSquashY(0.92 + Math.sin(gaitDist.current) * 0.04);
-          else setSquashY(1);
-        } else if (!body.grounded) {
-          setSquashY(0.88);
+      if (modeRef.current === "hide" && !targetRef.current) {
+        // Peek cycle while hiding
+        setHidePeek(0.35 + Math.sin(now / 700) * 0.15);
+        setSquashY(1.04);
+        trySetState("hide");
+        bodyRef.current = body;
+        setRenderPos({ ...body.pos });
+        if (now > modeUntil.current) {
+          modeRef.current = "idle";
+          setHidePeek(0);
+          trySetState("idle", true);
+          idleSince.current = now;
         }
-        if (body.grounded && body.vel.y === 0 && landHold.current <= 0 && Math.abs(body.vel.y) < 1) {
-          // landing recovery squash flash
-        }
+        raf = requestAnimationFrame(tick);
+        return;
       }
 
-      bodyRef.current = body;
-      setRenderPos({ ...body.pos });
+      // Travel / flee toward landmark
+      if (
+        targetRef.current &&
+        (modeRef.current === "travel" || modeRef.current === "flee")
+      ) {
+        const target = targetRef.current;
+        const speed =
+          modeRef.current === "flee" ? 460 : chaos ? 300 : 220;
+        const d = dist(body.pos, { x: target.x, y: target.y });
+        const dx = target.x - body.pos.x;
+        const dy = target.y - body.pos.y;
+
+        // Guided leap arc for tall perches (physics alone can't clear ~500px)
+        if (leapRef.current) {
+          const leap = leapRef.current;
+          leap.t = Math.min(1, leap.t + dt / leap.dur);
+          const u = leap.t;
+          const ease = u * u * (3 - 2 * u);
+          const lift = Math.sin(Math.PI * u) * Math.min(140, Math.abs(leap.from.y - leap.to.y) * 0.35);
+          body = {
+            pos: {
+              x: leap.from.x + (leap.to.x - leap.from.x) * ease,
+              y: leap.from.y + (leap.to.y - leap.from.y) * ease - lift,
+            },
+            vel: { x: 0, y: 0 },
+            grounded: false,
+            platformId: null,
+          };
+          trySetState("hop", true);
+          setSquashY(u < 0.15 ? 0.82 : u > 0.85 ? 1.12 : 0.9);
+          setFacing(leap.to.x >= leap.from.x ? 1 : -1);
+          if (u >= 1) {
+            body = {
+              pos: { x: leap.to.x, y: leap.to.y },
+              vel: { x: 0, y: 0 },
+              grounded: true,
+              platformId: target.platformId ?? null,
+            };
+            leapRef.current = null;
+            landHold.current = 0.3;
+            setSquashY(1.14);
+            if (target.kind === "hide") {
+              modeRef.current = "hide";
+              modeUntil.current = now + 4000 + Math.random() * 4000;
+              trySetState("hide", true);
+            } else {
+              modeRef.current = "idle";
+              trySetState("idle", true);
+              idleSince.current = now;
+            }
+            targetRef.current = null;
+            nextDecisionAt.current = now + (chaos ? 4500 : 7500);
+          }
+          setHidePeek(0);
+          bodyRef.current = body;
+          setRenderPos({ ...body.pos });
+          raf = requestAnimationFrame(tick);
+          return;
+        }
+
+        // Soft arrival — no teleport
+        if (
+          d < 22 &&
+          Math.abs(body.vel.x) < 50 &&
+          (body.grounded || Math.abs(dy) < 24)
+        ) {
+          body = {
+            pos: {
+              x: body.pos.x + (target.x - body.pos.x) * 0.35,
+              y: body.pos.y + (target.y - body.pos.y) * 0.35,
+            },
+            vel: { x: body.vel.x * 0.4, y: 0 },
+            grounded: true,
+            platformId: target.platformId ?? body.platformId,
+          };
+          if (d < 10) {
+            body.pos = { x: target.x, y: target.y };
+            body.vel = { x: 0, y: 0 };
+            landHold.current = 0.28;
+            setSquashY(1.14);
+            if (target.kind === "hide") {
+              modeRef.current = "hide";
+              modeUntil.current = now + 4000 + Math.random() * 4000;
+              trySetState("hide", true);
+            } else {
+              modeRef.current = "idle";
+              trySetState("idle", true);
+              idleSince.current = now;
+            }
+            targetRef.current = null;
+            nextDecisionAt.current = now + (chaos ? 4500 : 7500);
+          }
+        } else {
+          body = steerX(
+            body,
+            target.x,
+            speed,
+            dt,
+            modeRef.current === "flee" ? 14 : 9
+          );
+
+          const needHeight = dy < -40;
+          const tallLeap = dy < -160;
+          const aligned = Math.abs(dx) < (tallLeap ? 120 : 100);
+
+          if (
+            body.grounded &&
+            hopCooldown.current <= 0 &&
+            needHeight &&
+            aligned &&
+            tallLeap
+          ) {
+            // Parabolic leap onto high window edges
+            leapRef.current = {
+              from: { ...body.pos },
+              to: { x: target.x, y: target.y },
+              t: 0,
+              dur: clamp(0.45 + Math.abs(dy) / 900, 0.5, 0.85),
+            };
+            travelPhase.current = "leap";
+            trySetState("hop", true);
+            setSquashY(0.8);
+          } else {
+            const canHop =
+              body.grounded &&
+              hopCooldown.current <= 0 &&
+              ((needHeight && aligned && !tallLeap) ||
+                (modeRef.current === "flee" &&
+                  !needHeight &&
+                  Math.abs(dx) > 60 &&
+                  Math.random() < dt * 0.8));
+
+            if (canHop) {
+              const power = needHeight
+                ? jumpPowerForHeight(dy)
+                : modeRef.current === "flee"
+                  ? 680
+                  : 560;
+              body = jumpImpulse(body, power);
+              body.vel.x = clamp(
+                body.vel.x + Math.sign(dx || 1) * 50,
+                -speed,
+                speed
+              );
+              hopCooldown.current = 0.55;
+              travelPhase.current = "jump";
+              trySetState("hop", true);
+              setSquashY(0.84);
+            } else if (!body.grounded) {
+              body = steerX(body, target.x, speed * 0.9, dt, 5);
+              trySetState("hop");
+              setSquashY(0.88);
+              travelPhase.current = "jump";
+            } else {
+              trySetState("walk", true);
+              setSquashY(0.94 + Math.sin(gaitDist.current * 0.2) * 0.03);
+              travelPhase.current = "run";
+            }
+          }
+
+          if (Math.abs(body.vel.x) > 12) {
+            setFacing(body.vel.x >= 0 ? 1 : -1);
+          }
+          gaitDist.current += Math.abs(body.vel.x) * dt;
+          setGaitPhase((gaitDist.current % 42) / 42);
+        }
+
+        if (!leapRef.current) {
+          body = integrate(body, dt, b, platforms, { size });
+        }
+        if (body.grounded && landHold.current > 0) {
+          landHold.current -= dt;
+          setSquashY(1.12);
+        }
+        setHidePeek(0);
+        bodyRef.current = body;
+        setRenderPos({ ...body.pos });
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+
+      // Fall / idle floor physics
+      if (modeRef.current === "fall" || modeRef.current === "idle") {
+        body = integrate(body, dt, b, platforms, { size });
+        if (modeRef.current === "fall") {
+          trySetState("fall");
+          setSquashY(body.grounded ? 1.16 : 0.86);
+          if (body.grounded) {
+            modeRef.current = "idle";
+            landHold.current = 0.3;
+            trySetState("idle", true);
+            idleSince.current = now;
+            nextDecisionAt.current = now + 4000;
+          }
+        } else {
+          trySetState("idle");
+          if (landHold.current > 0) {
+            landHold.current -= dt;
+            setSquashY(1.1);
+          } else setSquashY(1);
+        }
+        setHidePeek(0);
+        bodyRef.current = body;
+        setRenderPos({ ...body.pos });
+      }
+
+      lastDecision.current = now;
       raf = requestAnimationFrame(tick);
     };
 
@@ -372,63 +804,87 @@ export function ToddStage({ layout, viewport }: Props) {
     viewport.width,
     viewport.height,
     size,
-    windows.terminal.open,
-    windows.terminal.minimized,
-    windows.terminal.x,
-    windows.terminal.y,
-    perchOnTerminal,
+    decide,
     trySetState,
     say,
+    // Window geometry — perch follow reads live DOM; deps keep sim aware of moves
+    windows,
   ]);
 
-  // Terminal command hooks
+  // Terminal commands → same FSM (request counters bump from todd-store.runCommand)
   useEffect(() => {
     if (!requestCome) return;
-    modeRef.current = "chase";
-    const p = perchOnTerminal() || {
+    leapRef.current = null;
+    const p = terminalPerch() || {
+      id: "come-terminal",
+      kind: "perch" as const,
       x: viewport.width * 0.45,
-      y: viewport.height * 0.4,
+      y: Math.max(80, viewport.height * 0.22),
+      platformId: "window-terminal",
     };
-    targetRef.current = p;
-    trySetState("commanded");
-  }, [requestCome, perchOnTerminal, viewport, trySetState]);
+    // Speech already set by store ("coming!!")
+    beginTravel(p, "travel");
+    nextDecisionAt.current = performance.now() + 12000;
+  }, [requestCome, terminalPerch, viewport, beginTravel]);
 
   useEffect(() => {
     if (!requestDance) return;
+    leapRef.current = null;
+    targetRef.current = null;
     modeRef.current = "dance";
     danceT.current = 0;
+    modeUntil.current = performance.now() + 4500;
     setState("dance");
-    const t = window.setTimeout(() => {
-      modeRef.current = "perch";
-      trySetState("idle", true);
-      const p = perchOnTerminal();
-      if (p) bodyRef.current.pos = p;
-    }, 4200);
-    return () => clearTimeout(t);
-  }, [requestDance, setState, trySetState, perchOnTerminal]);
+    nextDecisionAt.current = performance.now() + 8000;
+  }, [requestDance, setState]);
 
   useEffect(() => {
     if (!requestSleep) return;
+    leapRef.current = null;
+    targetRef.current = null;
     modeRef.current = "sleep";
+    modeUntil.current = performance.now() + 8500;
     setState("sleep");
+    nextDecisionAt.current = performance.now() + 12000;
   }, [requestSleep, setState]);
+
+  // Chaos toggle: kick the decision clock so mischief starts promptly
+  useEffect(() => {
+    if (!chaos) return;
+    nextDecisionAt.current = Math.min(
+      nextDecisionAt.current,
+      performance.now() + 700
+    );
+  }, [chaos]);
 
   const onPointerDown = (e: ReactPointerEvent) => {
     e.stopPropagation();
     e.currentTarget.setPointerCapture(e.pointerId);
-    modeRef.current = "drag";
-    setState("dragged");
-    say("weee!!");
+    pointerDownAt.current = performance.now();
+    dragged.current = false;
     dragRef.current = {
       px: e.clientX,
       py: e.clientY,
       ox: bodyRef.current.pos.x,
       oy: bodyRef.current.pos.y,
+      samples: [{ t: performance.now(), x: e.clientX, y: e.clientY }],
     };
   };
 
   const onPointerMove = (e: ReactPointerEvent) => {
     if (!dragRef.current) return;
+    const moved = Math.hypot(
+      e.clientX - dragRef.current.px,
+      e.clientY - dragRef.current.py
+    );
+    if (moved > 8 && !dragged.current) {
+      dragged.current = true;
+      modeRef.current = "drag";
+      setState("dragged");
+      say("weee!!");
+    }
+    if (!dragged.current) return;
+
     const b = bounds();
     const nx = clamp(
       dragRef.current.ox + (e.clientX - dragRef.current.px),
@@ -440,119 +896,176 @@ export function ToddStage({ layout, viewport }: Props) {
       b.minY,
       b.maxY
     );
+    const samples = dragRef.current.samples;
+    samples.push({ t: performance.now(), x: e.clientX, y: e.clientY });
+    if (samples.length > 6) samples.shift();
     bodyRef.current = {
       pos: { x: nx, y: ny },
-      vel: { x: e.movementX * 40, y: e.movementY * 40 },
+      vel: { x: 0, y: 0 },
       grounded: false,
+      platformId: null,
     };
     setRenderPos({ x: nx, y: ny });
-    setSquashY(1.1);
+    setSquashY(1.12);
   };
 
   const onPointerUp = (e: ReactPointerEvent) => {
     if (!dragRef.current) return;
+    const samples = dragRef.current.samples;
+    const wasDrag = dragged.current;
     dragRef.current = null;
-    modeRef.current = "wander";
-    setState("fall");
-    say("oof—");
-    bodyRef.current = {
-      ...bodyRef.current,
-      grounded: false,
-      vel: {
-        x: bodyRef.current.vel.x,
-        y: Math.max(200, bodyRef.current.vel.y),
-      },
-    };
-    landHold.current = 0.35;
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
     } catch {
       /* ignore */
     }
-    window.setTimeout(() => trySetState("idle", true), 400);
+
+    if (!wasDrag) return; // click handler will startle
+
+    let vx = 0;
+    let vy = 280;
+    if (samples.length >= 2) {
+      const a = samples[0];
+      const c = samples[samples.length - 1];
+      const span = Math.max(0.016, (c.t - a.t) / 1000);
+      vx = clamp(((c.x - a.x) / span) * 0.65, -900, 900);
+      vy = clamp(((c.y - a.y) / span) * 0.65, -200, 1100);
+    }
+
+    modeRef.current = "fall";
+    setState("fall");
+    say("oof—");
+    bodyRef.current = {
+      ...bodyRef.current,
+      grounded: false,
+      platformId: null,
+      vel: { x: vx, y: Math.max(180, vy) },
+    };
+    landHold.current = 0.35;
+    nextDecisionAt.current = performance.now() + 3500;
   };
 
   const onClick = () => {
-    if (dragRef.current) return;
+    if (dragged.current) return;
+
     const n = bumpClick();
     if (clickReset.current) clearTimeout(clickReset.current);
-    clickReset.current = window.setTimeout(() => resetClicks(), 2400);
+    clickReset.current = window.setTimeout(() => resetClicks(), 2600);
 
+    // Visible startle beat, then flee
+    modeRef.current = "startled";
+    startledUntil.current = performance.now() + 240 + Math.random() * 140;
     setState("startled");
     say(QUIPS[Math.min(n - 1, QUIPS.length - 1)]);
-    setSquashY(0.78);
+    setSquashY(0.76);
 
-    // anticipation then flee
-    bodyRef.current = jumpImpulse(bodyRef.current, 680);
-    modeRef.current = "flee";
     const marks = readLandmarks(viewport.width, viewport.height, size);
-    const options = marks.filter((m) => m.kind === "floor" || m.kind === "hide");
-    const pick = options[Math.floor(Math.random() * options.length)];
-    targetRef.current = pick
-      ? { x: pick.x, y: pick.y }
-      : {
-          x: clamp(
-            bodyRef.current.pos.x + (Math.random() > 0.5 ? 220 : -220),
-            8,
-            viewport.width - size - 8
-          ),
-          y: bounds().floorY,
-        };
+    const escape = pickLandmark(marks, {
+      prefer: ["floor", "hide", "wander"],
+      avoidId: lastLandmarkId.current,
+      from: bodyRef.current.pos,
+      minDist: 160,
+    });
+    targetRef.current =
+      escape ||
+      ({
+        id: "escape",
+        kind: "floor",
+        x: clamp(
+          bodyRef.current.pos.x + (Math.random() > 0.5 ? 260 : -260),
+          8,
+          viewport.width - size - 8
+        ),
+        y: bounds().floorY,
+        platformId: "floor",
+      } satisfies Landmark);
+    lastLandmarkId.current = targetRef.current.id;
 
     if (n >= 4) {
       modeRef.current = "dance";
+      modeUntil.current = performance.now() + 2800;
       say("OK FINE I'LL DANCE");
-      window.setTimeout(() => {
-        modeRef.current = "perch";
-        trySetState("idle", true);
-        resetClicks();
-      }, 2800);
+      setState("dance");
+      window.setTimeout(() => resetClicks(), 2800);
     }
   };
 
   if (hiddenTab) return null;
+  if (layout === "mobile") {
+    // Simplified: no autonomous roaming covering the sheet
+    return null;
+  }
 
-  const bubbleLeft = renderPos.x > viewport.width * 0.55;
+  const bubbleW = 220;
+  const bubbleH = 56;
+  const preferLeft = renderPos.x + size * 0.55 + bubbleW > viewport.width - 20;
+  const preferBelow = renderPos.y < STATUS + 64;
+  const bubbleLeft = clamp(
+    preferLeft
+      ? renderPos.x + size * 0.2 - bubbleW
+      : renderPos.x + size * 0.55,
+    12,
+    viewport.width - bubbleW - 12
+  );
+  const bubbleTop = clamp(
+    preferBelow
+      ? renderPos.y + size * 0.72
+      : renderPos.y - bubbleH - 8,
+    STATUS + 8,
+    viewport.height - DOCK - bubbleH - 8
+  );
+  const opacity = modeRef.current === "hide" ? 0.55 + hidePeek * 0.35 : 1;
+  const zBoost = modeRef.current === "hide" ? 40 : 70;
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-[70] overflow-hidden">
+    <div
+      className="pointer-events-none absolute inset-0 overflow-visible"
+      style={{ zIndex: zBoost }}
+    >
+      <AnimatePresence>
+        {speech && (
+          <motion.div
+            key={speech}
+            initial={{ opacity: 0, y: preferBelow ? -6 : 6, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: preferBelow ? -4 : 4 }}
+            transition={{ duration: 0.2 }}
+            className="speech-bubble pointer-events-none absolute z-20"
+            data-side={preferLeft ? "left" : "right"}
+            data-v={preferBelow ? "below" : "above"}
+            style={{
+              left: bubbleLeft,
+              top: bubbleTop,
+              color: "#f7faf5",
+            }}
+          >
+            {speech.split("**").map((part, i) =>
+              i % 2 === 1 ? (
+                <strong key={i} className="font-semibold text-[var(--os-lime)]">
+                  {part}
+                </strong>
+              ) : (
+                <span key={i}>{part}</span>
+              )
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div
         className="pointer-events-auto absolute will-change-transform"
         style={{
           transform: `translate3d(${renderPos.x}px, ${renderPos.y}px, 0)`,
           width: size,
           height: size,
+          opacity,
+          transition: modeRef.current === "hide" ? "opacity 0.35s ease" : undefined,
         }}
       >
-        <AnimatePresence>
-          {speech && (
-            <motion.div
-              key={speech}
-              initial={{ opacity: 0, y: 8, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 4 }}
-              className={`absolute z-10 max-w-[200px] rounded-xl border border-white/20 bg-black/85 px-3.5 py-2.5 font-mono text-xs leading-snug text-zinc-100 shadow-2xl backdrop-blur-md ${
-                bubbleLeft ? "right-[75%] top-1" : "left-[75%] top-1"
-              }`}
-              style={{ translateY: "-100%" }}
-            >
-              {speech.split("**").map((part, i) =>
-                i % 2 === 1 ? (
-                  <strong key={i} className="text-[var(--os-lime)]">
-                    {part}
-                  </strong>
-                ) : (
-                  <span key={i}>{part}</span>
-                )
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         <button
           type="button"
           aria-label="Todd the frog. Click to startle, drag to move, or try todd dance in the terminal."
-          className="touch-none cursor-grab border-0 bg-transparent p-0 outline-none ring-0 active:cursor-grabbing focus:outline-none focus-visible:outline-none"
+          className="relative touch-none cursor-grab appearance-none border-0 bg-transparent p-0 shadow-none outline-none ring-0 [-webkit-tap-highlight-color:transparent] active:cursor-grabbing focus:outline-none focus-visible:outline-none"
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
