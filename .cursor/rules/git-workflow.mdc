@@ -1,0 +1,10 @@
+---
+description: Git push and commit workflow for this portfolio repo
+alwaysApply: true
+---
+
+# Git workflow
+
+- Push **only** to `main`. Do not create or push feature branches unless the owner explicitly asks.
+- When committing work, use **multiple small commits** with clear messages — never squash a large change into one commit.
+- Do not merge via PR unless asked; land work on `main` and `git push origin main`.
