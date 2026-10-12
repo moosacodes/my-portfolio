@@ -4,7 +4,7 @@ import { motion, AnimatePresence, useSpring } from "framer-motion";
 import { useState, useRef, useCallback, useEffect } from "react";
 import Image from "next/image";
 
-const GITHUB_BASE = "https://github.com/kenjiifx";
+const GITHUB_BASE = "https://github.com/moosacodes";
 const LINKEDIN_URL = "https://www.linkedin.com/in/moosa-alam";
 const EMAIL = "moosahameed07@gmail.com";
 
@@ -216,7 +216,7 @@ export default function Home() {
                 href={GITHUB_BASE}
                 target="_blank"
                 rel="noopener noreferrer"
-                title="github.com/kenjiifx"
+                title="github.com/moosacodes"
                 className="w-11 h-11 rounded-full border border-white/20 flex items-center justify-center text-white/80 hover:border-white/50 hover:text-white transition-colors"
                 aria-label="GitHub"
                 whileHover={{ scale: 1.14, y: -3 }}
@@ -363,12 +363,12 @@ export default function Home() {
                       {
                         name: "Virtualized Network Home Lab",
                         desc: "Linux, Docker, GitHub Actions, Wireshark · Segmented multi-host lab with isolated subnets, IPv4 routing, DNS, DHCP, NAT, SSH, and firewall rules — validated with ping, traceroute, and packet analysis.",
-                        href: "https://github.com/kenjiifx/Virtualized-Network-Home-Lab",
+                        href: "https://github.com/moosacodes/Virtualized-Network-Home-Lab",
                       },
                       {
                         name: "User-Space VPN Tunnel",
                         desc: "Python, Linux, TUN/TAP, UDP, Wireshark · Point-to-point VPN that encapsulates and routes IP packets between isolated endpoints with forwarding, NAT, firewall rules, and authenticated encryption.",
-                        href: "https://github.com/kenjiifx/User-Space-VPN-Tunnel",
+                        href: "https://github.com/moosacodes/User-Space-VPN-Tunnel",
                       },
                     ] as {
                       name: string;

@@ -9,7 +9,7 @@ export default function ResumePage() {
   const blobUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
-    fetch("/Moosa_Alam_Resume_2026.pdf")
+    fetch("/Moosa_Alam_Networking_Resume.pdf")
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load PDF");
         return res.blob();
@@ -36,7 +36,7 @@ export default function ResumePage() {
         </Link>
         <span className="text-white/40 text-xs">Resume · Moosa Alam</span>
         <a
-          href="/Moosa_Alam_Resume_2026.pdf"
+          href="/Moosa_Alam_Networking_Resume.pdf"
           download
           className="text-sm text-white/60 hover:text-white transition-colors"
         >
@@ -48,7 +48,7 @@ export default function ResumePage() {
           <div className="p-6 text-center text-white/70">
             <p>Could not load the PDF.</p>
             <a
-              href="/Moosa_Alam_Resume_2026.pdf"
+              href="/Moosa_Alam_Networking_Resume.pdf"
               target="_blank"
               rel="noopener noreferrer"
               className="mt-2 inline-block text-sm underline hover:text-white"
