@@ -4,16 +4,20 @@ import { EXPERIENCE } from "@/lib/portfolio/data";
 
 export function ExperienceApp() {
   return (
-    <div className="relative space-y-0 pl-4">
-      <div className="absolute bottom-2 left-[5px] top-2 w-px bg-white/10" />
-      {EXPERIENCE.map((job) => (
-        <div key={job.org} className="relative pb-8 pl-5 last:pb-0">
-          <div className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-[var(--os-bg)] bg-[var(--os-lime)]" />
-          <h3 className="font-display text-base font-semibold text-white">
-            {job.role} — {job.org}
-          </h3>
-          <p className="mt-0.5 text-xs text-zinc-500">{job.period}</p>
-          <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+    <div className="space-y-0">
+      {EXPERIENCE.map((job, i) => (
+        <div
+          key={job.org}
+          className={`py-5 ${i === 0 ? "pt-0" : "border-t border-white/[0.07]"}`}
+        >
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <h3 className="font-display text-[16px] font-semibold tracking-[-0.03em] text-white">
+              {job.role}
+            </h3>
+            <p className="font-mono text-[11px] text-white/30">{job.period}</p>
+          </div>
+          <p className="mt-1 text-[13px] text-[var(--os-lime)]/75">{job.org}</p>
+          <p className="mt-2.5 max-w-[48ch] text-[13.5px] leading-relaxed text-white/45">
             {job.desc}
           </p>
         </div>
