@@ -11,6 +11,7 @@ export const PROFILE = {
   resumePdf: "/Moosa_Alam_Networking_Resume.pdf",
   resumePath: "/resume",
   lastUpdated: "September 2026",
+  osVersion: "1.0.0",
 } as const;
 
 export const ABOUT = {
@@ -157,25 +158,55 @@ export type AppId =
 
 export const APP_META: Record<
   AppId,
-  { title: string; icon: string; dockLabel: string }
+  { title: string; dockLabel: string; menuLabel: string }
 > = {
-  about: { title: "About", icon: "◉", dockLabel: "About" },
-  projects: { title: "Projects", icon: "◈", dockLabel: "Projects" },
-  experience: { title: "Experience", icon: "◇", dockLabel: "Experience" },
-  skills: { title: "Skills", icon: "◎", dockLabel: "Skills" },
-  education: { title: "Education", icon: "▣", dockLabel: "Education" },
-  terminal: { title: "Terminal", icon: ">_", dockLabel: "Terminal" },
-  resume: { title: "Resume", icon: "▤", dockLabel: "Resume" },
-  contact: { title: "Contact", icon: "✉", dockLabel: "Contact" },
+  about: { title: "About", dockLabel: "About", menuLabel: "About" },
+  projects: { title: "Projects", dockLabel: "Projects", menuLabel: "Projects" },
+  experience: {
+    title: "Experience",
+    dockLabel: "Experience",
+    menuLabel: "Experience",
+  },
+  skills: { title: "Skills", dockLabel: "Skills", menuLabel: "Skills" },
+  education: {
+    title: "Education",
+    dockLabel: "Education",
+    menuLabel: "Education",
+  },
+  terminal: { title: "Terminal", dockLabel: "Terminal", menuLabel: "Terminal" },
+  resume: { title: "Resume", dockLabel: "Resume", menuLabel: "Resume" },
+  contact: { title: "Contact", dockLabel: "Contact", menuLabel: "Contact" },
 };
 
+/** Menu bar order (matches mockup) */
+export const MENU_ORDER: AppId[] = [
+  "terminal",
+  "projects",
+  "about",
+  "experience",
+  "skills",
+  "resume",
+  "contact",
+];
+
+/** Primary dock icons (6, mockup-style) — Education still available via terminal/open */
 export const DOCK_ORDER: AppId[] = [
+  "terminal",
+  "projects",
+  "resume",
+  "skills",
+  "experience",
+  "contact",
+];
+
+/** All apps for window registry */
+export const ALL_APPS: AppId[] = [
+  "terminal",
   "about",
   "projects",
   "experience",
   "skills",
   "education",
-  "terminal",
   "resume",
   "contact",
 ];

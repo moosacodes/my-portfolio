@@ -4,15 +4,12 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
-import {
-  APP_META,
-  DOCK_ORDER,
-  type AppId,
-} from "@/lib/portfolio/data";
+import { ALL_APPS, type AppId } from "@/lib/portfolio/data";
 import {
   DEFAULT_WINDOW_GEOMETRY,
   type WindowState,
@@ -35,31 +32,62 @@ type WindowStore = {
 
 const WindowContext = createContext<WindowStore | null>(null);
 
-function buildInitial(): Record<AppId, WindowState> {
+function centerTerminal(vw: number, vh: number) {
+  const width = Math.min(720, Math.max(480, vw * 0.55));
+  const height = Math.min(420, Math.max(300, vh * 0.48));
+  return {
+    width,
+    height,
+    x: Math.round((vw - width) / 2),
+    y: Math.round(Math.max(72, (vh - height) / 2 - 24)),
+  };
+}
+
+function buildInitial(vw = 1280, vh = 800): Record<AppId, WindowState> {
   const out = {} as Record<AppId, WindowState>;
   let z = 1;
-  for (const id of DOCK_ORDER) {
-    const g = DEFAULT_WINDOW_GEOMETRY[id];
+  const term = centerTerminal(vw, vh);
+  for (const id of ALL_APPS) {
+    const g = id === "terminal" ? term : DEFAULT_WINDOW_GEOMETRY[id];
     out[id] = {
       id,
-      open: id === "about",
+      open: id === "terminal",
       minimized: false,
       maximized: false,
       x: g.x,
       y: g.y,
       width: g.width,
       height: g.height,
-      z: id === "about" ? 20 : z++,
+      z: id === "terminal" ? 30 : z++,
     };
   }
   return out;
 }
 
 export function WindowProvider({ children }: { children: ReactNode }) {
-  const [windows, setWindows] = useState(buildInitial);
-  const [focused, setFocused] = useState<AppId | null>("about");
+  const [windows, setWindows] = useState(() => buildInitial());
+  const [focused, setFocused] = useState<AppId | null>("terminal");
   const [mobileActive, setMobileActive] = useState<AppId | null>(null);
-  const [zCounter, setZCounter] = useState(20);
+  const [zCounter, setZCounter] = useState(30);
+
+  useEffect(() => {
+    const place = () => {
+      const term = centerTerminal(window.innerWidth, window.innerHeight);
+      setWindows((prev) => {
+        if (prev.terminal.maximized) return prev;
+        return {
+          ...prev,
+          terminal: {
+            ...prev.terminal,
+            ...term,
+          },
+        };
+      });
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, []);
 
   const focusApp = useCallback((id: AppId) => {
     setZCounter((z) => {
@@ -76,15 +104,10 @@ export function WindowProvider({ children }: { children: ReactNode }) {
 
   const openApp = useCallback(
     (id: AppId) => {
-      setWindows((prev) => {
-        if (prev[id].open && !prev[id].minimized) {
-          return prev;
-        }
-        return {
-          ...prev,
-          [id]: { ...prev[id], open: true, minimized: false },
-        };
-      });
+      setWindows((prev) => ({
+        ...prev,
+        [id]: { ...prev[id], open: true, minimized: false },
+      }));
       focusApp(id);
     },
     [focusApp]
@@ -107,13 +130,16 @@ export function WindowProvider({ children }: { children: ReactNode }) {
     setFocused((f) => (f === id ? null : f));
   }, []);
 
-  const toggleMaximize = useCallback((id: AppId) => {
-    setWindows((prev) => ({
-      ...prev,
-      [id]: { ...prev[id], maximized: !prev[id].maximized, minimized: false },
-    }));
-    focusApp(id);
-  }, [focusApp]);
+  const toggleMaximize = useCallback(
+    (id: AppId) => {
+      setWindows((prev) => ({
+        ...prev,
+        [id]: { ...prev[id], maximized: !prev[id].maximized, minimized: false },
+      }));
+      focusApp(id);
+    },
+    [focusApp]
+  );
 
   const moveWindow = useCallback((id: AppId, x: number, y: number) => {
     setWindows((prev) => ({
@@ -123,7 +149,7 @@ export function WindowProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const getOpenStack = useCallback(() => {
-    return DOCK_ORDER.filter(
+    return ALL_APPS.filter(
       (id) => windows[id].open && !windows[id].minimized
     ).sort((a, b) => windows[a].z - windows[b].z);
   }, [windows]);
@@ -167,8 +193,4 @@ export function useWindows() {
   const ctx = useContext(WindowContext);
   if (!ctx) throw new Error("useWindows must be used within WindowProvider");
   return ctx;
-}
-
-export function useAppMeta(id: AppId) {
-  return APP_META[id];
 }
