@@ -19,7 +19,7 @@ type Props = {
 };
 
 const DOCK_CLEARANCE = 96;
-const STATUS_H = 44;
+const STATUS_H = 40;
 
 export function WindowFrame({ id, children, viewport }: Props) {
   const {
@@ -143,60 +143,55 @@ export function WindowFrame({ id, children, viewport }: Props) {
       initial={{ opacity: 0, scale: 0.98, y: 8 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.22 }}
-      className={`absolute flex flex-col overflow-visible rounded-xl outline-none ${
-        isFocused ? "opacity-100" : "opacity-90"
-      }`}
+      className="absolute flex flex-col overflow-visible outline-none"
       style={{
         ...style,
         zIndex: w.z,
       }}
     >
-      {/* Overflow visible so Todd can peek; inner shell clips content */}
       <div
-        className={`glass-panel flex h-full flex-col overflow-hidden rounded-xl ${
-          isFocused
-            ? "border-white/15 shadow-[0_30px_90px_rgba(0,0,0,0.65)]"
-            : "border-white/8"
+        className={`glass-panel flex h-full flex-col overflow-hidden rounded-[22px] ${
+          isFocused ? "glass-panel-focus" : "opacity-[0.97]"
         }`}
       >
         <div
-          className="flex h-10 shrink-0 cursor-grab items-center gap-2 border-b border-white/10 bg-black/25 px-3 active:cursor-grabbing"
+          className="flex h-11 shrink-0 cursor-grab items-center gap-2 border-b border-white/[0.06] bg-black/35 px-4 active:cursor-grabbing"
           data-todd-landmark="window-perch"
           data-todd-perch={id}
           onPointerDown={onPointerDownTitle}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
         >
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               aria-label={`Close ${meta.title}`}
               onClick={() => closeApp(id)}
-              className="h-3 w-3 rounded-full bg-[#ff5f57] hover:brightness-110"
+              className="h-[13px] w-[13px] rounded-full bg-[#ff5f57] shadow-[0_0_0_0.5px_rgba(0,0,0,0.35)] hover:brightness-110"
               data-todd-safe
             />
             <button
               type="button"
               aria-label={`Minimize ${meta.title}`}
               onClick={() => minimizeApp(id)}
-              className="h-3 w-3 rounded-full bg-[#febc2e] hover:brightness-110"
+              className="h-[13px] w-[13px] rounded-full bg-[#febc2e] shadow-[0_0_0_0.5px_rgba(0,0,0,0.35)] hover:brightness-110"
               data-todd-safe
             />
             <button
               type="button"
               aria-label={`Maximize ${meta.title}`}
               onClick={() => toggleMaximize(id)}
-              className="h-3 w-3 rounded-full bg-[#28c840] hover:brightness-110"
+              className="h-[13px] w-[13px] rounded-full bg-[#28c840] shadow-[0_0_0_0.5px_rgba(0,0,0,0.35)] hover:brightness-110"
               data-todd-safe
             />
           </div>
-          <span className="flex-1 truncate text-center font-mono text-xs text-zinc-300">
+          <span className="flex-1 truncate text-center font-mono text-[12px] tracking-wide text-white/40">
             {title}
           </span>
           {isTerminal ? (
             <button
               type="button"
-              className="w-8 text-center text-zinc-500 hover:text-white"
+              className="w-8 text-center text-[16px] text-white/25 hover:text-white/65"
               aria-label="New tab (cosmetic)"
               data-todd-safe
               tabIndex={-1}
@@ -207,7 +202,13 @@ export function WindowFrame({ id, children, viewport }: Props) {
             <span className="w-8" aria-hidden />
           )}
         </div>
-        <div className="relative min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
+        <div
+          className={`relative min-h-0 flex-1 overflow-y-auto ${
+            isTerminal
+              ? "bg-[radial-gradient(ellipse_70%_45%_at_50%_115%,rgba(110,170,55,0.11),transparent_62%)] px-9 py-8 sm:px-11 sm:py-9"
+              : "p-6 sm:p-7"
+          }`}
+        >
           {children}
         </div>
       </div>
