@@ -1,18 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, IBM_Plex_Sans, JetBrains_Mono } from "next/font/google";
+import { Sora, Figtree, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 
-const plusJakarta = Plus_Jakarta_Sans({
+const sora = Sora({
   subsets: ["latin"],
   variable: "--font-display",
   weight: ["400", "500", "600", "700", "800"],
 });
 
-const ibmPlex = IBM_Plex_Sans({
+const figtree = Figtree({
   subsets: ["latin"],
   variable: "--font-body",
-  weight: ["300", "400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const jetbrains = JetBrains_Mono({
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#07090c",
+  themeColor: "#030503",
 };
 
 export default function RootLayout({
@@ -55,7 +55,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body
-        className={`${plusJakarta.variable} ${ibmPlex.variable} ${jetbrains.variable} font-sans antialiased h-full bg-[var(--os-bg)] text-white`}
+        className={`${sora.variable} ${figtree.variable} ${jetbrains.variable} font-sans antialiased h-full bg-[var(--os-bg)] text-white`}
       >
         {children}
         <Analytics />
