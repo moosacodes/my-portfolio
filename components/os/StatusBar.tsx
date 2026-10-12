@@ -15,13 +15,16 @@ export function StatusBar() {
     const tick = () => {
       const d = new Date();
       setTime(
-        d.toLocaleString([], {
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-        })
+        d
+          .toLocaleString("en-US", {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          })
+          .replace(",", "")
       );
     };
     tick();
@@ -32,21 +35,21 @@ export function StatusBar() {
   return (
     <header
       data-todd-landmark="status"
-      className="glass-bar relative z-50 flex h-12 shrink-0 items-center justify-between border-b px-3 sm:px-5"
+      className="glass-bar relative z-50 flex h-11 shrink-0 items-center justify-between border-b px-4 sm:px-5"
     >
-      <div className="flex min-w-0 items-center gap-3 sm:gap-6">
+      <div className="flex min-w-0 items-center gap-7 lg:gap-9">
         <button
           type="button"
           onClick={() => openApp("terminal")}
-          className="flex items-center gap-2.5 font-display text-[15px] font-bold tracking-tight text-white"
+          className="flex items-center gap-2.5 font-display text-[14px] font-semibold tracking-[-0.03em] text-white"
           data-todd-safe
         >
           <Image
             src="/todd/todd-original.png"
             alt=""
-            width={22}
-            height={22}
-            className="h-[22px] w-[22px] object-contain"
+            width={18}
+            height={18}
+            className="h-[18px] w-[18px] object-contain"
           />
           <span>
             MOOSA<span className="text-[var(--os-lime)]">.OS</span>
@@ -60,10 +63,10 @@ export function StatusBar() {
               type="button"
               onClick={() => openApp(id)}
               data-todd-safe
-              className={`rounded-md px-3 py-1.5 text-[13px] transition ${
+              className={`rounded-md px-2.5 py-[6px] text-[12.5px] font-medium tracking-[-0.01em] transition ${
                 focused === id
-                  ? "bg-white/10 text-white"
-                  : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
+                  ? "bg-white/[0.12] text-white"
+                  : "text-white/40 hover:bg-white/[0.05] hover:text-white/80"
               }`}
             >
               {APP_META[id].menuLabel}
@@ -72,36 +75,43 @@ export function StatusBar() {
         </nav>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-3 text-zinc-400">
+      <div className="flex items-center gap-3.5 text-white/45">
         <button
           type="button"
           onClick={() => setPaused(!paused)}
-          className="hidden rounded-md border border-white/10 px-2 py-0.5 text-[11px] text-zinc-300 transition hover:border-white/25 hover:text-white sm:inline"
+          className={`hidden rounded-md p-1.5 transition hover:bg-white/10 hover:text-white/85 md:inline-flex ${
+            paused ? "text-[var(--os-lime)]" : ""
+          }`}
           aria-pressed={paused}
           data-todd-safe
-          title="Pause Todd"
+          title={paused ? "Resume Todd" : "Pause Todd"}
         >
-          {paused ? "Todd: paused" : "Pause Todd"}
+          {paused ? (
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5v14l11-7L8 5z" />
+            </svg>
+          ) : (
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M6 5h4v14H6V5zm8 0h4v14h-4V5z" />
+            </svg>
+          )}
         </button>
-        <span className="hidden sm:inline" aria-hidden title="Signal">
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M2 16h2v4H2zm4-3h2v7H6zm4-3h2v10h-2zm4-3h2v13h-2zm4-4h2v17h-2z" />
-          </svg>
-        </span>
         <button
           type="button"
           onClick={() => openApp("terminal")}
-          className="rounded p-1 hover:bg-white/10 hover:text-white"
+          className="rounded-md p-1.5 hover:bg-white/10 hover:text-white/85"
           aria-label="Search / open terminal"
           data-todd-safe
           title="Open Terminal"
         >
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="7" />
             <path d="M20 20l-3.5-3.5" strokeLinecap="round" />
           </svg>
         </button>
-        <span className="tabular-nums text-[13px] text-zinc-300">{time}</span>
+        <span className="tabular-nums text-[12.5px] tracking-[-0.01em] text-white/55">
+          {time}
+        </span>
       </div>
     </header>
   );
