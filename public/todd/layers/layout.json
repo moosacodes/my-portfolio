@@ -1,0 +1,37 @@
+{
+  "canvas": 500,
+  "leftEye": {
+    "cx": 32.6,
+    "cy": 29.2,
+    "w": 14.4,
+    "h": 12.6
+  },
+  "rightEye": {
+    "cx": 66.4,
+    "cy": 28.8,
+    "w": 14.6,
+    "h": 12.2
+  },
+  "whitePad": 0.8,
+  "maxPupil": 3.2,
+  "assets": {
+    "body": "/todd/layers/body.png",
+    "canonical": "/todd/todd-original.png",
+    "eyeWhiteL": "/todd/layers/eye-white-l.png",
+    "eyeWhiteR": "/todd/layers/eye-white-r.png",
+    "pupilL": "/todd/layers/pupil-l.png",
+    "pupilR": "/todd/layers/pupil-r.png",
+    "lidL": "/todd/layers/lid-l.png",
+    "lidR": "/todd/layers/lid-r.png",
+    "walkA": "/todd/todd-walk-a.png",
+    "walkB": "/todd/todd-walk-b.png",
+    "jump": "/todd/todd-jump.png"
+  },
+  "notes": {
+    "missingForFullFidelity": [
+      "Dedicated eyelid art painted from same fuzzy shader (current lids are texture-sampled)",
+      "Separate foot/leg frames for a cleaner run cycle (walk-a/walk-b/jump are usable but slightly drifted)",
+      "Startled + dance pose sheets matching todd-original lighting"
+    ]
+  }
+}
