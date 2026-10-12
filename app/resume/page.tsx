@@ -32,7 +32,7 @@ export default function ResumePage() {
           href="/"
           className="text-sm text-white/60 hover:text-white transition-colors"
         >
-          ← Back to site
+          ← Back to MOOSA.OS
         </Link>
         <span className="text-white/40 text-xs">Resume · Moosa Alam</span>
         <a

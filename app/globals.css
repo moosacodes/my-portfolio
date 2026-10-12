@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --os-bg: #121418;
+  --os-window: #1a1d24;
+  --os-lime: #b8f000;
+  --os-lime-dim: #8bc000;
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -13,70 +22,39 @@ html {
 }
 
 body {
-  overflow-x: hidden;
+  overflow: hidden;
   font-family: var(--font-body), system-ui, sans-serif;
+  background: var(--os-bg);
+  color: #fff;
 }
 
 .font-display {
   font-family: var(--font-display), system-ui, sans-serif;
 }
 
-/* Dot grid background */
-.dot-grid {
-  background-image: radial-gradient(
-    circle at 1px 1px,
-    rgba(255, 255, 255, 0.08) 1px,
-    transparent 0
-  );
-  background-size: 24px 24px;
-  background-position: 0 0;
+/* Charcoal wallpaper with subtle noise + vignette */
+.os-wallpaper {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(184, 240, 0, 0.04), transparent 55%),
+    radial-gradient(ellipse 100% 80% at 50% 100%, rgba(0, 0, 0, 0.55), transparent 50%),
+    linear-gradient(180deg, #16191f 0%, #0e1014 100%);
 }
-
-/* Animated gradient border (for cards) */
-.gradient-border {
-  position: relative;
-  background: #0a0a0a;
-}
-.gradient-border::before {
+.os-wallpaper::after {
   content: "";
   position: absolute;
   inset: 0;
-  padding: 1px;
-  border-radius: inherit;
-  background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.02));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  mix-blend-mode: overlay;
   pointer-events: none;
-}
-
-/* Link hover underline */
-.link-underline {
-  position: relative;
-}
-.link-underline::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: -2px;
-  width: 100%;
-  height: 1px;
-  background: currentColor;
-  transform: scaleX(0);
-  transform-origin: right;
-  transition: transform 0.25s ease;
-}
-.link-underline:hover::after {
-  transform: scaleX(1);
-  transform-origin: left;
 }
 
 ::-webkit-scrollbar {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0a0a0a;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: #333;
@@ -87,149 +65,16 @@ body {
 }
 
 ::selection {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(184, 240, 0, 0.25);
   color: #fff;
 }
 
-/* Tech strip: seamless, no box/border – only text + mask fade at edges */
-.tech-strip-seamless {
-  background: transparent !important;
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  pointer-events: none; /* no hover state on container = no visible box */
-}
-.tech-strip-seamless * {
-  pointer-events: auto; /* allow selection/hover on text if needed, but text has no bg */
-}
-.tech-strip-mask {
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    black 8%,
-    black 92%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    black 8%,
-    black 92%,
-    transparent 100%
-  );
-  mask-size: 100% 100%;
-  mask-repeat: no-repeat;
-}
-.tech-strip-seamless:hover,
-.tech-strip-seamless:focus,
-.tech-strip-seamless:focus-within {
-  background: transparent !important;
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-/* Float for PFP - more noticeable (disabled when user prefers reduced motion) */
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
-}
-.animate-float {
-  animation: float 3.5s ease-in-out infinite;
-}
 @media (prefers-reduced-motion: reduce) {
-  .animate-float {
-    animation: none;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
-
-/* Glow pulse for PFP */
-@keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 24px rgba(255,255,255,0.08); }
-  50% { box-shadow: 0 0 40px rgba(255,255,255,0.18); }
-}
-.animate-glow-pulse {
-  animation: glow-pulse 2.5s ease-in-out infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .animate-glow-pulse {
-    animation: none;
-    box-shadow: 0 0 24px rgba(255,255,255,0.08);
-  }
-}
-
-/* Card hover shine */
-@keyframes shine {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-.card-shine {
-  position: relative;
-  overflow: hidden;
-}
-.card-shine::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255,255,255,0.06),
-    transparent
-  );
-  transition: none;
-}
-.card-shine:hover::after {
-  animation: shine 0.7s ease-out;
-}
-
-/* Animated gradient border for cards */
-@keyframes border-flow {
-  0%, 100% { opacity: 0.15; }
-  50% { opacity: 0.35; }
-}
-.gradient-border-hover:hover::before {
-  animation: border-flow 2s ease-in-out infinite;
-}
-
-/* Marquee / scrolling tech strip */
-@keyframes marquee-left {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-@keyframes marquee-right {
-  0% { transform: translateX(-50%); }
-  100% { transform: translateX(0); }
-}
-.animate-marquee-left {
-  animation: marquee-left 25s linear infinite;
-}
-.animate-marquee-right {
-  animation: marquee-right 25s linear infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .animate-marquee-left,
-  .animate-marquee-right {
-    animation: none;
-  }
-}
-
-/* Subtle bounce for interactive elements */
-@keyframes bounce-in {
-  0% { transform: scale(0.95); opacity: 0; }
-  60% { transform: scale(1.02); }
-  100% { transform: scale(1); opacity: 1; }
-}
-.animate-bounce-in {
-  animation: bounce-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-/* Text fade up with stagger */
-@keyframes fade-up-in {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-

@@ -5,17 +5,7 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  async headers() {
-    return [
-      {
-        source: "/Moosa_Alam_Networking_Resume.pdf",
-        headers: [
-          { key: "Content-Disposition", value: "inline" },
-          { key: "X-Content-Type-Options", value: "nosniff" },
-        ],
-      },
-    ];
-  },
+  // PDF Content-Disposition is set in vercel.json (headers() is ignored with output: "export")
 };
 
 export default nextConfig;
