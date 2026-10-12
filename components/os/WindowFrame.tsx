@@ -207,7 +207,7 @@ export function WindowFrame({ id, children, viewport }: Props) {
             <span className="w-8" aria-hidden />
           )}
         </div>
-        <div className="relative min-h-0 flex-1 overflow-y-auto p-4">
+        <div className="relative min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
           {children}
         </div>
       </div>

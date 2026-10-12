@@ -13,7 +13,7 @@ export function ToddExe() {
 
   return (
     <aside
-      className="glass-panel absolute left-4 top-4 z-40 hidden w-[220px] overflow-hidden rounded-xl sm:block"
+      className="glass-panel absolute left-5 top-5 z-40 hidden w-[240px] overflow-hidden rounded-xl sm:block"
       data-todd-landmark="todd-exe"
       aria-label="Todd status"
     >
@@ -35,7 +35,7 @@ export function ToddExe() {
           ×
         </button>
       </div>
-      <div className="space-y-2.5 px-3 py-3 font-mono text-[11px]">
+      <div className="space-y-2.5 px-3.5 py-3.5 font-mono text-[12px]">
         <Row label="status" value={statusLabel} />
         <Row label="mood" value={mood} />
         <Bar label="energy" value={energy} />

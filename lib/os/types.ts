@@ -19,7 +19,7 @@ export const DEFAULT_WINDOW_GEOMETRY: Record<
   AppId,
   { x: number; y: number; width: number; height: number }
 > = {
-  terminal: { x: 280, y: 120, width: 720, height: 420 },
+  terminal: { x: 200, y: 90, width: 880, height: 520 },
   about: { x: 96, y: 88, width: 520, height: 480 },
   projects: { x: 160, y: 100, width: 560, height: 460 },
   experience: { x: 200, y: 80, width: 540, height: 500 },

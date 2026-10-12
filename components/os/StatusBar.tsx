@@ -32,35 +32,35 @@ export function StatusBar() {
   return (
     <header
       data-todd-landmark="status"
-      className="glass-bar relative z-50 flex h-11 shrink-0 items-center justify-between border-b px-3 sm:px-4"
+      className="glass-bar relative z-50 flex h-12 shrink-0 items-center justify-between border-b px-3 sm:px-5"
     >
-      <div className="flex min-w-0 items-center gap-3 sm:gap-5">
+      <div className="flex min-w-0 items-center gap-3 sm:gap-6">
         <button
           type="button"
           onClick={() => openApp("terminal")}
-          className="flex items-center gap-2 font-display text-sm font-bold tracking-tight text-white"
+          className="flex items-center gap-2.5 font-display text-[15px] font-bold tracking-tight text-white"
           data-todd-safe
         >
           <Image
             src="/todd/todd-original.png"
             alt=""
-            width={20}
-            height={20}
-            className="h-5 w-5 object-contain"
+            width={22}
+            height={22}
+            className="h-[22px] w-[22px] object-contain"
           />
           <span>
             MOOSA<span className="text-[var(--os-lime)]">.OS</span>
           </span>
         </button>
 
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Apps">
+        <nav className="hidden items-center gap-0.5 md:flex" aria-label="Apps">
           {MENU_ORDER.map((id) => (
             <button
               key={id}
               type="button"
               onClick={() => openApp(id)}
               data-todd-safe
-              className={`rounded-md px-2.5 py-1 text-xs transition ${
+              className={`rounded-md px-3 py-1.5 text-[13px] transition ${
                 focused === id
                   ? "bg-white/10 text-white"
                   : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
@@ -101,7 +101,7 @@ export function StatusBar() {
             <path d="M20 20l-3.5-3.5" strokeLinecap="round" />
           </svg>
         </button>
-        <span className="tabular-nums text-xs text-zinc-300">{time}</span>
+        <span className="tabular-nums text-[13px] text-zinc-300">{time}</span>
       </div>
     </header>
   );

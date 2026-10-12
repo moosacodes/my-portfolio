@@ -22,6 +22,7 @@ export function TerminalApp() {
     { type: "sys", text: `Welcome to MOOSA.OS v${PROFILE.osVersion}` },
     { type: "dim", text: "An interactive developer portfolio." },
     { type: "dim", text: "Type 'help' to get started." },
+    { type: "dim", text: "" },
   ]);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -101,11 +102,11 @@ export function TerminalApp() {
 
   return (
     <div
-      className="relative flex h-full min-h-[260px] flex-col font-mono text-[13px] leading-relaxed"
+      className="relative flex h-full min-h-[320px] flex-col font-mono text-[15px] leading-relaxed sm:text-[16px]"
       onClick={() => inputRef.current?.focus()}
     >
       <div
-        className="min-h-0 flex-1 space-y-0.5 overflow-y-auto pr-1"
+        className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1"
         role="log"
         aria-live="polite"
         aria-relevant="additions"
@@ -117,10 +118,10 @@ export function TerminalApp() {
               l.type === "in"
                 ? "text-[var(--os-lime)]"
                 : l.type === "sys"
-                  ? "text-[var(--os-lime)]"
+                  ? "text-[var(--os-lime)] text-[17px] font-medium sm:text-[18px]"
                   : l.type === "dim"
                     ? "text-zinc-500"
-                    : "text-[#b8e85a]/90"
+                    : "text-[#c6ef6a]"
             }`}
           >
             {l.text}
@@ -131,7 +132,7 @@ export function TerminalApp() {
 
       <form
         onSubmit={onSubmit}
-        className="mt-3 flex items-center gap-2 border-t border-white/5 pt-3"
+        className="mt-4 flex items-center gap-2.5 border-t border-white/10 pt-4"
       >
         <span className="shrink-0 text-[var(--os-lime)]" aria-hidden>
           todd@moosa:~$
@@ -149,11 +150,10 @@ export function TerminalApp() {
           spellCheck={false}
           autoFocus
           className="min-w-0 flex-1 bg-transparent text-[var(--os-lime)] outline-none caret-[var(--os-lime)] placeholder:text-zinc-600"
-          placeholder=""
           aria-label="Terminal command input"
         />
         <span
-          className="animate-cursor-blink h-4 w-2 bg-[var(--os-lime)]"
+          className="animate-cursor-blink h-[1.1em] w-2.5 bg-[var(--os-lime)]"
           aria-hidden
         />
       </form>
@@ -161,10 +161,10 @@ export function TerminalApp() {
       <button
         type="button"
         onClick={() => {
-          say("that's me!! click me · drag me · todd dance");
+          say("that's me!! click · drag · todd dance");
           toddCommand("come");
         }}
-        className="absolute bottom-1 right-1 text-[11px] text-zinc-500 transition hover:text-[var(--os-lime)]"
+        className="absolute bottom-2 right-2 text-sm text-zinc-500 transition hover:text-[var(--os-lime)]"
         data-todd-safe
       >
         meet todd →

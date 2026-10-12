@@ -67,10 +67,13 @@ Optional: set `NEXT_PUBLIC_SITE_URL` (e.g. `https://moosaalam.vercel.app`) for c
 
 | File | Use |
 |------|-----|
-| `public/todd/todd-original.png` | Canonical transparent runtime sprite (source of truth) |
-| `public/todd/todd-avatar.png` | White-background profile companion (not the runtime sprite) |
+| `public/todd/todd-original.png` | Canonical transparent sprite (source of truth for idle/look/sleep lids) |
+| `public/todd/todd-avatar.png` | White-background profile companion |
+| `public/todd/todd-walk-a.png` / `todd-walk-b.png` | Walk cycle poses |
+| `public/todd/todd-jump.png` | Jump / airborne pose |
+| `public/todd/todd-startled.png` / `todd-dance.png` | Reaction / dance poses |
 
-Todd’s silhouette (lime fuzz, googly eyes, black bow tie) is preserved from the supplied art. Animation uses a **layered rig** (body PNG + pupil / blink / bow / squash overlays). A single still pose cannot fully articulate like multi-pose sprites; future matching pose assets would raise quality.
+Todd uses a **pose sprite set + layered eye/lid/bow overlays** on the canonical idle art, driven by a physics/FSM movement engine (velocity, gravity, jump arcs, landmarks). Pose frames were derived from the original art; artist-authored matching frames would further improve style consistency.
 
 ## Resume
 

@@ -2,7 +2,7 @@
 
 import type { AppId } from "@/lib/portfolio/data";
 
-const cls = "h-[22px] w-[22px]";
+const cls = "h-[24px] w-[24px]";
 
 export function DockIcon({ id }: { id: AppId }) {
   switch (id) {
