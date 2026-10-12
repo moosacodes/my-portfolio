@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, IBM_Plex_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans, IBM_Plex_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -13,6 +13,12 @@ const ibmPlex = IBM_Plex_Sans({
   subsets: ["latin"],
   variable: "--font-body",
   weight: ["300", "400", "500", "600"],
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -38,7 +44,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#121418",
+  themeColor: "#07090c",
 };
 
 export default function RootLayout({
@@ -49,7 +55,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body
-        className={`${plusJakarta.variable} ${ibmPlex.variable} font-sans antialiased h-full bg-[var(--os-bg)] text-white`}
+        className={`${plusJakarta.variable} ${ibmPlex.variable} ${jetbrains.variable} font-sans antialiased h-full bg-[var(--os-bg)] text-white`}
       >
         {children}
         <Analytics />

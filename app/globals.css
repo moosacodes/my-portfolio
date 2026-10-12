@@ -3,12 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --os-bg: #121418;
-  --os-window: #1a1d24;
-  --os-lime: #b8f000;
-  --os-lime-dim: #8bc000;
-  --font-display: var(--font-display);
-  --font-body: var(--font-body);
+  --os-bg: #07090c;
+  --os-window: rgba(18, 22, 28, 0.72);
+  --os-window-solid: #12161c;
+  --os-glass: rgba(22, 28, 36, 0.55);
+  --os-border: rgba(255, 255, 255, 0.1);
+  --os-lime: #c8ff2d;
+  --os-lime-dim: #8fbf1a;
+  --os-lime-glow: rgba(200, 255, 45, 0.35);
 }
 
 * {
@@ -17,8 +19,9 @@
   box-sizing: border-box;
 }
 
-html {
-  scroll-behavior: smooth;
+html,
+body {
+  height: 100%;
 }
 
 body {
@@ -32,22 +35,59 @@ body {
   font-family: var(--font-display), system-ui, sans-serif;
 }
 
-/* Charcoal wallpaper with subtle noise + vignette */
+.font-mono {
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+/* Smoky green spotlight floor — matches mockup atmosphere */
 .os-wallpaper {
   background:
-    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(184, 240, 0, 0.04), transparent 55%),
-    radial-gradient(ellipse 100% 80% at 50% 100%, rgba(0, 0, 0, 0.55), transparent 50%),
-    linear-gradient(180deg, #16191f 0%, #0e1014 100%);
+    radial-gradient(ellipse 55% 45% at 62% 18%, rgba(120, 180, 40, 0.14), transparent 55%),
+    radial-gradient(ellipse 70% 55% at 50% 78%, rgba(90, 140, 30, 0.22), transparent 60%),
+    radial-gradient(ellipse 40% 30% at 30% 40%, rgba(40, 60, 30, 0.12), transparent 50%),
+    linear-gradient(180deg, #0a0d11 0%, #06080a 45%, #050705 100%);
+}
+.os-wallpaper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 80% 50% at 50% 100%,
+    rgba(0, 0, 0, 0.65),
+    transparent 55%
+  );
+  pointer-events: none;
 }
 .os-wallpaper::after {
   content: "";
   position: absolute;
   inset: 0;
-  opacity: 0.35;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 180px 180px;
+  opacity: 0.22;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
   mix-blend-mode: overlay;
   pointer-events: none;
+}
+
+.glass-panel {
+  background: var(--os-glass);
+  border: 1px solid var(--os-border);
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+}
+
+.glass-bar {
+  background: rgba(10, 12, 16, 0.55);
+  border-color: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.lime-glow {
+  box-shadow: 0 0 20px var(--os-lime-glow);
 }
 
 ::-webkit-scrollbar {
@@ -57,24 +97,56 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #333;
+  background: #2a2f38;
   border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #555;
 }
 
 ::selection {
-  background: rgba(184, 240, 0, 0.25);
+  background: rgba(200, 255, 45, 0.28);
   color: #fff;
 }
 
+@keyframes todd-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes todd-sparkle {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes cursor-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-cursor-blink {
+  animation: cursor-blink 1.05s step-end infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  .animate-cursor-blink,
+  .todd-bob,
+  .todd-sparkle {
+    animation: none !important;
   }
 }
