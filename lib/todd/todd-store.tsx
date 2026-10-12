@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -96,10 +97,22 @@ export function ToddProvider({ children }: { children: ReactNode }) {
   const [requestDance, setRequestDance] = useState(0);
   const [requestSleep, setRequestSleep] = useState(0);
 
-  const say = useCallback((text: string, ms = 4200) => {
+  const say = useCallback((text: string, ms = 5200) => {
     setSpeech(text);
     if (speechTimer.current) clearTimeout(speechTimer.current);
     speechTimer.current = window.setTimeout(() => setSpeech(null), ms);
+  }, []);
+
+  // Clear the boot greeting after visitors have time to read it
+  useEffect(() => {
+    speechTimer.current = window.setTimeout(() => {
+      setSpeech((s) =>
+        s === "hey there! type **help** to begin." ? null : s
+      );
+    }, 12000);
+    return () => {
+      if (speechTimer.current) clearTimeout(speechTimer.current);
+    };
   }, []);
 
   const setState = useCallback((s: ToddState) => {
@@ -158,7 +171,7 @@ export function ToddProvider({ children }: { children: ReactNode }) {
           setChaos(next);
           say(next ? "chaos mode… hehe" : "okay okay, chilling");
           return next
-            ? "Chaos mode ON. Todd will occasionally wander (rate-limited)."
+            ? "Chaos mode ON. Todd will roam and surprise you more often."
             : "Chaos mode OFF. Todd settles down.";
         }
         case "pause":
