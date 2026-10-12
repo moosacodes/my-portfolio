@@ -33,7 +33,7 @@ function useViewport() {
 
 function DesktopInner() {
   const { viewport, layout } = useViewport();
-  const { closeApp, focused, minimizeApp, openApp } = useWindows();
+  const { closeApp, focused, minimizeApp, openApp, mobileActive } = useWindows();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -72,46 +72,51 @@ function DesktopInner() {
 
         {layout === "mobile" && (
           <>
-            <div className="flex h-full flex-col items-center justify-center px-6 pb-28 pt-10 text-center">
-              <div className="mb-4 h-20 w-20">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/todd/todd-original.png"
-                  alt=""
-                  className="h-full w-full object-contain drop-shadow-xl"
-                />
-              </div>
-              <p className="font-display text-2xl font-bold tracking-tight">
-                MOOSA<span className="text-[var(--os-lime)]">.OS</span>
-              </p>
-              <p className="mt-2 text-sm text-zinc-400">{PROFILE.fullName}</p>
-              <p className="mt-1 text-xs text-zinc-500">{PROFILE.tagline}</p>
-              <button
-                type="button"
-                onClick={() => openApp("terminal")}
-                data-todd-safe
-                className="mt-6 rounded-xl border border-[var(--os-lime)]/40 bg-[var(--os-lime)]/10 px-4 py-2.5 font-mono text-xs text-[var(--os-lime)]"
-              >
-                todd@moosa:~$ open terminal
-              </button>
-              <div className="mt-4 flex flex-wrap justify-center gap-2">
-                <a
-                  href={`mailto:${PROFILE.email}`}
+            {!mobileActive && (
+              <div className="flex h-full flex-col items-center justify-center px-7 pb-32 pt-12 text-center">
+                <div className="mb-6 h-28 w-28">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/todd/todd-original.png"
+                    alt=""
+                    className="h-full w-full object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.65)]"
+                  />
+                </div>
+                <p className="font-display text-[34px] font-semibold tracking-[-0.04em]">
+                  MOOSA<span className="text-[var(--os-lime)]">.OS</span>
+                </p>
+                <p className="mt-3 text-[15px] text-white/70">{PROFILE.fullName}</p>
+                <p className="mt-1.5 max-w-[28ch] text-[12.5px] leading-relaxed text-white/35">
+                  {PROFILE.tagline}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => openApp("terminal")}
                   data-todd-safe
-                  className="rounded-lg border border-white/15 px-3 py-2 text-xs text-zinc-200"
+                  className="mt-8 rounded-2xl border border-[var(--os-lime)]/35 bg-[var(--os-lime)]/[0.08] px-5 py-3 font-mono text-[12px] text-[var(--os-lime)]"
                 >
-                  Email
-                </a>
-                <a
-                  href={PROFILE.resumePdf}
-                  download
-                  data-todd-safe
-                  className="rounded-lg border border-white/15 px-3 py-2 text-xs text-zinc-200"
-                >
-                  Resume
-                </a>
+                  todd@moosa:~$ open terminal
+                </button>
+                <div className="mt-5 flex items-center gap-5 text-[12px] text-white/40">
+                  <a
+                    href={`mailto:${PROFILE.email}`}
+                    data-todd-safe
+                    className="transition hover:text-white/75"
+                  >
+                    Email
+                  </a>
+                  <span className="h-1 w-1 rounded-full bg-white/20" aria-hidden />
+                  <a
+                    href={PROFILE.resumePdf}
+                    download
+                    data-todd-safe
+                    className="transition hover:text-white/75"
+                  >
+                    Resume
+                  </a>
+                </div>
               </div>
-            </div>
+            )}
             <MobileSheet />
           </>
         )}
