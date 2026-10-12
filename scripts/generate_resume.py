@@ -115,7 +115,7 @@ def build():
     story.append(
         Paragraph(
             "437-212-7641 | malam20@uoguelph.ca | linkedin.com/in/moosa-alam | "
-            "github.com/kenjiifx",
+            "github.com/moosacodes",
             s["contact"],
         )
     )
