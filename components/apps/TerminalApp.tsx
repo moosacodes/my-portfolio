@@ -13,16 +13,15 @@ import { autocomplete, runCommand } from "@/lib/terminal/commands";
 import { useWindows } from "@/lib/os/window-store";
 import { useTodd } from "@/lib/todd/todd-store";
 
-type Line = { type: "in" | "out" | "sys"; text: string };
+type Line = { type: "in" | "out" | "sys" | "dim"; text: string };
 
 export function TerminalApp() {
   const { openApp } = useWindows();
-  const { runCommand: toddCommand } = useTodd();
+  const { runCommand: toddCommand, say } = useTodd();
   const [lines, setLines] = useState<Line[]>([
-    {
-      type: "sys",
-      text: `MOOSA.OS v1.0 — ${PROFILE.fullName}. Type help to begin.`,
-    },
+    { type: "sys", text: `Welcome to MOOSA.OS v${PROFILE.osVersion}` },
+    { type: "dim", text: "An interactive developer portfolio." },
+    { type: "dim", text: "Type 'help' to get started." },
   ]);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -39,7 +38,10 @@ export function TerminalApp() {
       const trimmed = raw.trim();
       if (!trimmed) return;
 
-      setLines((prev) => [...prev, { type: "in", text: `$ ${trimmed}` }]);
+      setLines((prev) => [
+        ...prev,
+        { type: "in", text: `todd@moosa:~$ ${trimmed}` },
+      ]);
       setHistory((h) => [...h, trimmed]);
       setHistIdx(-1);
 
@@ -51,10 +53,8 @@ export function TerminalApp() {
 
       if (result.clear) {
         setLines([
-          {
-            type: "sys",
-            text: "Terminal cleared. Type help for commands.",
-          },
+          { type: "sys", text: `Welcome to MOOSA.OS v${PROFILE.osVersion}` },
+          { type: "dim", text: "Terminal cleared. Type help for commands." },
         ]);
       } else if (result.lines.length) {
         setLines((prev) => [
@@ -101,11 +101,11 @@ export function TerminalApp() {
 
   return (
     <div
-      className="flex h-full min-h-[240px] flex-col font-mono text-[13px]"
+      className="relative flex h-full min-h-[260px] flex-col font-mono text-[13px] leading-relaxed"
       onClick={() => inputRef.current?.focus()}
     >
       <div
-        className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1"
+        className="min-h-0 flex-1 space-y-0.5 overflow-y-auto pr-1"
         role="log"
         aria-live="polite"
         aria-relevant="additions"
@@ -117,8 +117,10 @@ export function TerminalApp() {
               l.type === "in"
                 ? "text-[var(--os-lime)]"
                 : l.type === "sys"
-                  ? "text-zinc-500"
-                  : "text-zinc-300"
+                  ? "text-[var(--os-lime)]"
+                  : l.type === "dim"
+                    ? "text-zinc-500"
+                    : "text-[#b8e85a]/90"
             }`}
           >
             {l.text}
@@ -126,12 +128,13 @@ export function TerminalApp() {
         ))}
         <div ref={bottomRef} />
       </div>
+
       <form
         onSubmit={onSubmit}
-        className="mt-2 flex items-center gap-2 border-t border-white/10 pt-2"
+        className="mt-3 flex items-center gap-2 border-t border-white/5 pt-3"
       >
-        <span className="text-[var(--os-lime)]" aria-hidden>
-          $
+        <span className="shrink-0 text-[var(--os-lime)]" aria-hidden>
+          todd@moosa:~$
         </span>
         <label htmlFor="moosa-terminal-input" className="sr-only">
           Terminal command
@@ -144,11 +147,28 @@ export function TerminalApp() {
           onKeyDown={onKeyDown}
           autoComplete="off"
           spellCheck={false}
-          className="min-w-0 flex-1 bg-transparent text-zinc-100 outline-none placeholder:text-zinc-600"
-          placeholder="help · open projects · todd dance"
+          autoFocus
+          className="min-w-0 flex-1 bg-transparent text-[var(--os-lime)] outline-none caret-[var(--os-lime)] placeholder:text-zinc-600"
+          placeholder=""
           aria-label="Terminal command input"
         />
+        <span
+          className="animate-cursor-blink h-4 w-2 bg-[var(--os-lime)]"
+          aria-hidden
+        />
       </form>
+
+      <button
+        type="button"
+        onClick={() => {
+          say("that's me!! click me · drag me · todd dance");
+          toddCommand("come");
+        }}
+        className="absolute bottom-1 right-1 text-[11px] text-zinc-500 transition hover:text-[var(--os-lime)]"
+        data-todd-safe
+      >
+        meet todd →
+      </button>
     </div>
   );
 }
