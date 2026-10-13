@@ -1,7 +1,5 @@
-"use client";
-
-import { Desktop } from "@/components/os/Desktop";
+import { Portfolio } from "@/components/site/Portfolio";
 
 export default function Home() {
-  return <Desktop />;
+  return <Portfolio />;
 }
