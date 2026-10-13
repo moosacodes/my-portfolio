@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { animate, motion, useMotionValue } from "framer-motion";
 
 const SIZE = 96;
@@ -63,6 +64,7 @@ export function PlayfulTodd() {
   const [speech, setSpeech] = useState<string | null>(null);
   const [hopping, setHopping] = useState(false);
   const [ready, setReady] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const busy = useRef(false);
   const reduced = useRef(false);
@@ -136,6 +138,10 @@ export function PlayfulTodd() {
   );
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     alive.current = true;
     reduced.current = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
@@ -174,11 +180,11 @@ export function PlayfulTodd() {
     })();
   };
 
-  if (!ready) return null;
+  if (!ready || !mounted) return null;
 
-  return (
+  return createPortal(
     <motion.div
-      className="pointer-events-none fixed z-[40]"
+      className="pointer-events-none fixed top-0 left-0 z-[80]"
       style={{ x, y, width: SIZE, height: SIZE }}
     >
       {speech && (
@@ -233,6 +239,7 @@ export function PlayfulTodd() {
           }
         />
       </button>
-    </motion.div>
+    </motion.div>,
+    document.body
   );
 }

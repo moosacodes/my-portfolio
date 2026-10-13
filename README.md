@@ -67,8 +67,7 @@ Optional: set `NEXT_PUBLIC_SITE_URL` (e.g. `https://moosaalam.vercel.app`) for c
 
 | File | Use |
 |------|-----|
-| `public/todd/todd-original.png` | Canonical transparent sprite (source of truth for idle/look/sleep lids) |
-| `public/todd/todd-avatar.png` | White-background profile companion |
+| `public/todd/todd-original.png` | Canonical transparent sprite (source of truth) |
 | `public/todd/todd-walk-a.png` / `todd-walk-b.png` | Walk cycle poses |
 | `public/todd/todd-jump.png` | Jump / airborne pose |
 | `public/todd/todd-startled.png` / `todd-dance.png` | Reaction / dance poses |
