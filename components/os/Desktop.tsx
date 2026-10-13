@@ -8,7 +8,6 @@ import { StatusBar } from "@/components/os/StatusBar";
 import { Dock } from "@/components/os/Dock";
 import { WindowFrame } from "@/components/os/WindowFrame";
 import { MobileSheet } from "@/components/os/MobileSheet";
-import { ToddExe } from "@/components/os/ToddExe";
 import { AppContent } from "@/components/apps/AppContent";
 import { ToddStage } from "@/components/todd/ToddStage";
 
@@ -58,17 +57,13 @@ function DesktopInner() {
 
       <StatusBar />
 
-      <main id="os-main" className="relative min-h-0 flex-1">
-        {layout === "desktop" && (
-          <>
-            <ToddExe />
-            {ALL_APPS.map((id: AppId) => (
-              <WindowFrame key={id} id={id} viewport={viewport}>
-                <AppContent id={id} />
-              </WindowFrame>
-            ))}
-          </>
-        )}
+      <main id="os-main" className="relative min-h-0 flex-1 overflow-hidden">
+        {layout === "desktop" &&
+          ALL_APPS.map((id: AppId) => (
+            <WindowFrame key={id} id={id} viewport={viewport}>
+              <AppContent id={id} />
+            </WindowFrame>
+          ))}
 
         {layout === "mobile" && (
           <>
@@ -120,11 +115,12 @@ function DesktopInner() {
             <MobileSheet />
           </>
         )}
-
-        <ToddStage layout={layout} viewport={viewport} />
       </main>
 
       <Dock layout={layout} />
+
+      {/* Full-viewport stage so landmark rects match Todd transforms */}
+      <ToddStage layout={layout} viewport={viewport} />
     </div>
   );
 }

@@ -11,7 +11,6 @@ import {
 import { motion } from "framer-motion";
 import { APP_META, type AppId } from "@/lib/portfolio/data";
 import { useWindows } from "@/lib/os/window-store";
-
 type Props = {
   id: AppId;
   children: ReactNode;
@@ -140,9 +139,9 @@ export function WindowFrame({ id, children, viewport }: Props) {
       tabIndex={-1}
       onKeyDown={onKeyDown}
       onPointerDown={() => focusApp(id)}
-      initial={{ opacity: 0, scale: 0.98, y: 8 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.22 }}
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
       className="absolute flex flex-col overflow-visible outline-none"
       style={{
         ...style,
@@ -150,19 +149,19 @@ export function WindowFrame({ id, children, viewport }: Props) {
       }}
     >
       <div
-        className={`glass-panel flex h-full flex-col overflow-hidden rounded-[22px] ${
-          isFocused ? "glass-panel-focus" : "opacity-[0.97]"
-        }`}
+        className={`glass-panel flex h-full flex-col overflow-hidden rounded-[24px] ${
+          isTerminal && isFocused ? "glass-panel-hero" : ""
+        } ${isFocused ? "glass-panel-focus" : "opacity-[0.98]"}`}
       >
         <div
-          className="flex h-11 shrink-0 cursor-grab items-center gap-2 border-b border-white/[0.06] bg-black/35 px-4 active:cursor-grabbing"
+          className="relative flex h-11 shrink-0 cursor-grab items-center border-b border-white/[0.06] bg-black/40 px-4 active:cursor-grabbing"
           data-todd-landmark="window-perch"
           data-todd-perch={id}
           onPointerDown={onPointerDownTitle}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
         >
-          <div className="flex items-center gap-2">
+          <div className="z-10 flex items-center gap-2">
             <button
               type="button"
               aria-label={`Close ${meta.title}`}
@@ -185,13 +184,13 @@ export function WindowFrame({ id, children, viewport }: Props) {
               data-todd-safe
             />
           </div>
-          <span className="flex-1 truncate text-center font-mono text-[12px] tracking-wide text-white/40">
+          <span className="pointer-events-none absolute inset-x-0 text-center font-mono text-[12px] tracking-wide text-white/40">
             {title}
           </span>
           {isTerminal ? (
             <button
               type="button"
-              className="w-8 text-center text-[16px] text-white/25 hover:text-white/65"
+              className="z-10 ml-auto w-8 text-center text-[16px] text-white/25 hover:text-white/65"
               aria-label="New tab (cosmetic)"
               data-todd-safe
               tabIndex={-1}
@@ -199,13 +198,13 @@ export function WindowFrame({ id, children, viewport }: Props) {
               +
             </button>
           ) : (
-            <span className="w-8" aria-hidden />
+            <span className="ml-auto w-8" aria-hidden />
           )}
         </div>
         <div
           className={`relative min-h-0 flex-1 overflow-y-auto ${
             isTerminal
-              ? "bg-[radial-gradient(ellipse_70%_45%_at_50%_115%,rgba(110,170,55,0.11),transparent_62%)] px-9 py-8 sm:px-11 sm:py-9"
+              ? "bg-[radial-gradient(ellipse_70%_45%_at_50%_115%,rgba(110,170,55,0.1),transparent_62%)] px-7 py-6 sm:px-8 sm:py-7"
               : "p-6 sm:p-7"
           }`}
         >

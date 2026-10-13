@@ -9,7 +9,7 @@ import { useTodd } from "@/lib/todd/todd-store";
 export function StatusBar() {
   const [time, setTime] = useState("");
   const { openApp, focused } = useWindows();
-  const { paused, setPaused } = useTodd();
+  const { paused, setPaused, chaos, setChaos } = useTodd();
 
   useEffect(() => {
     const tick = () => {
@@ -35,13 +35,13 @@ export function StatusBar() {
   return (
     <header
       data-todd-landmark="status"
-      className="glass-bar relative z-50 flex h-11 shrink-0 items-center justify-between border-b px-4 sm:px-5"
+      className="glass-bar relative z-50 flex h-11 shrink-0 items-center justify-between border-b px-5"
     >
-      <div className="flex min-w-0 items-center gap-7 lg:gap-9">
+      <div className="flex min-w-0 items-center gap-8">
         <button
           type="button"
           onClick={() => openApp("terminal")}
-          className="flex items-center gap-2.5 font-display text-[14px] font-semibold tracking-[-0.03em] text-white"
+          className="flex items-center gap-2.5 font-display text-[14px] font-semibold tracking-[-0.04em] text-white"
           data-todd-safe
         >
           <Image
@@ -56,17 +56,17 @@ export function StatusBar() {
           </span>
         </button>
 
-        <nav className="hidden items-center gap-0.5 md:flex" aria-label="Apps">
+        <nav className="hidden items-center gap-1 md:flex" aria-label="Apps">
           {MENU_ORDER.map((id) => (
             <button
               key={id}
               type="button"
               onClick={() => openApp(id)}
               data-todd-safe
-              className={`rounded-md px-2.5 py-[6px] text-[12.5px] font-medium tracking-[-0.01em] transition ${
+              className={`rounded-lg px-2.5 py-[6px] text-[12.5px] font-medium tracking-[-0.02em] transition ${
                 focused === id
                   ? "bg-white/[0.12] text-white"
-                  : "text-white/40 hover:bg-white/[0.05] hover:text-white/80"
+                  : "text-white/35 hover:bg-white/[0.05] hover:text-white/80"
               }`}
             >
               {APP_META[id].menuLabel}
@@ -75,11 +75,24 @@ export function StatusBar() {
         </nav>
       </div>
 
-      <div className="flex items-center gap-3.5 text-white/45">
+      <div className="flex items-center gap-2.5 text-white/40">
+        <button
+          type="button"
+          onClick={() => setChaos(!chaos)}
+          className={`hidden rounded-lg px-2 py-1 font-mono text-[10px] uppercase tracking-wider transition md:inline-flex ${
+            chaos
+              ? "bg-[var(--os-lime)]/15 text-[var(--os-lime)]"
+              : "hover:bg-white/10 hover:text-white/70"
+          }`}
+          data-todd-safe
+          title="Toggle Todd chaos mode"
+        >
+          chaos
+        </button>
         <button
           type="button"
           onClick={() => setPaused(!paused)}
-          className={`hidden rounded-md p-1.5 transition hover:bg-white/10 hover:text-white/85 md:inline-flex ${
+          className={`hidden rounded-lg p-1.5 transition hover:bg-white/10 hover:text-white/85 md:inline-flex ${
             paused ? "text-[var(--os-lime)]" : ""
           }`}
           aria-pressed={paused}
@@ -96,20 +109,7 @@ export function StatusBar() {
             </svg>
           )}
         </button>
-        <button
-          type="button"
-          onClick={() => openApp("terminal")}
-          className="rounded-md p-1.5 hover:bg-white/10 hover:text-white/85"
-          aria-label="Search / open terminal"
-          data-todd-safe
-          title="Open Terminal"
-        >
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="7" />
-            <path d="M20 20l-3.5-3.5" strokeLinecap="round" />
-          </svg>
-        </button>
-        <span className="tabular-nums text-[12.5px] tracking-[-0.01em] text-white/55">
+        <span className="tabular-nums text-[12px] tracking-[-0.01em] text-white/45">
           {time}
         </span>
       </div>

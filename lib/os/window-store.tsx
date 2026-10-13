@@ -32,15 +32,27 @@ type WindowStore = {
 
 const WindowContext = createContext<WindowStore | null>(null);
 
+/** Tight hero terminal — hugs content, leaves room for Todd on the right lip */
 function centerTerminal(vw: number, vh: number) {
-  // Hero pane: wide, tall enough to own the first viewport
-  const width = Math.min(920, Math.max(620, vw * 0.6));
-  const height = Math.min(520, Math.max(360, vh * 0.52));
+  const width = Math.min(820, Math.max(580, vw * 0.54));
+  const height = Math.min(400, Math.max(320, vh * 0.44));
   return {
     width: Math.round(width),
     height: Math.round(height),
-    x: Math.round((vw - width) / 2 - vw * 0.02),
-    y: Math.round(Math.max(72, vh * 0.14)),
+    x: Math.round((vw - width) / 2 - 28),
+    y: Math.round(Math.max(100, vh * 0.18)),
+  };
+}
+
+function centerContent(vw: number, vh: number, id: AppId) {
+  const base = DEFAULT_WINDOW_GEOMETRY[id];
+  const width = Math.min(base.width, Math.max(440, vw * 0.44));
+  const height = Math.min(base.height, Math.max(380, vh * 0.62));
+  return {
+    width: Math.round(width),
+    height: Math.round(height),
+    x: Math.round((vw - width) / 2),
+    y: Math.round(Math.max(80, (vh - height) / 2 - 12)),
   };
 }
 
@@ -49,7 +61,7 @@ function buildInitial(vw = 1280, vh = 800): Record<AppId, WindowState> {
   let z = 1;
   const term = centerTerminal(vw, vh);
   for (const id of ALL_APPS) {
-    const g = id === "terminal" ? term : DEFAULT_WINDOW_GEOMETRY[id];
+    const g = id === "terminal" ? term : centerContent(vw, vh, id);
     out[id] = {
       id,
       open: id === "terminal",
@@ -73,15 +85,14 @@ export function WindowProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const place = () => {
-      const term = centerTerminal(window.innerWidth, window.innerHeight);
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const term = centerTerminal(vw, vh);
       setWindows((prev) => {
         if (prev.terminal.maximized) return prev;
         return {
           ...prev,
-          terminal: {
-            ...prev.terminal,
-            ...term,
-          },
+          terminal: { ...prev.terminal, ...term },
         };
       });
     };
@@ -105,10 +116,27 @@ export function WindowProvider({ children }: { children: ReactNode }) {
 
   const openApp = useCallback(
     (id: AppId) => {
-      setWindows((prev) => ({
-        ...prev,
-        [id]: { ...prev[id], open: true, minimized: false },
-      }));
+      const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
+      const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+      const centered =
+        id === "terminal" ? centerTerminal(vw, vh) : centerContent(vw, vh, id);
+
+      setWindows((prev) => {
+        const next = { ...prev };
+        for (const other of ALL_APPS) {
+          if (other !== id && next[other].open && !next[other].minimized) {
+            next[other] = { ...next[other], minimized: true };
+          }
+        }
+        next[id] = {
+          ...next[id],
+          open: true,
+          minimized: false,
+          maximized: false,
+          ...centered,
+        };
+        return next;
+      });
       focusApp(id);
     },
     [focusApp]

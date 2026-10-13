@@ -4,17 +4,38 @@ import { useState } from "react";
 import Image from "next/image";
 import { useTodd } from "@/lib/todd/todd-store";
 
+/** Compact companion chip — closed by default so it doesn't kill the hero. */
 export function ToddExe() {
   const { statusLabel, mood, energy, chaos, paused } = useTodd();
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
 
-  if (!open) return null;
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="absolute left-5 top-5 z-[80] hidden items-center gap-2 rounded-full border border-white/10 bg-black/55 px-3 py-1.5 font-mono text-[11px] text-white/55 shadow-lg backdrop-blur-xl transition hover:border-[var(--os-lime)]/30 hover:text-white sm:flex"
+        data-todd-landmark="todd-exe"
+        data-todd-safe
+        aria-label="Open todd.exe"
+      >
+        <Image
+          src="/todd/todd-original.png"
+          alt=""
+          width={14}
+          height={14}
+          className="h-3.5 w-3.5 object-contain"
+        />
+        todd · {statusLabel}
+      </button>
+    );
+  }
 
   const chaosPct = chaos ? 72 : paused ? 6 : 24;
 
   return (
     <aside
-      className="absolute left-5 top-5 z-[80] hidden w-[210px] overflow-hidden rounded-2xl border border-white/[0.1] bg-[#0a0e0b]/95 shadow-[0_28px_70px_rgba(0,0,0,0.6)] sm:block"
+      className="absolute left-5 top-5 z-[80] hidden w-[200px] overflow-hidden rounded-2xl border border-white/[0.1] bg-[#0a0e0b] shadow-[0_28px_70px_rgba(0,0,0,0.65)] sm:block"
       data-todd-landmark="todd-exe"
       aria-label="Todd status"
     >
