@@ -17,9 +17,14 @@ export function ExperienceApp() {
             <p className="font-mono text-[11px] text-white/30">{job.period}</p>
           </div>
           <p className="mt-1 text-[13px] text-[var(--os-lime)]/75">{job.org}</p>
-          <p className="mt-2.5 max-w-[48ch] text-[13.5px] leading-relaxed text-white/45">
-            {job.desc}
-          </p>
+          <ul className="mt-2.5 max-w-[52ch] space-y-1.5 text-[13.5px] leading-relaxed text-white/45">
+            {job.bullets.map((b) => (
+              <li key={b} className="flex gap-2">
+                <span className="mt-[0.55em] h-1 w-1 shrink-0 rounded-full bg-white/30" />
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       ))}
     </div>

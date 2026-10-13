@@ -61,9 +61,14 @@ export function ExperienceSection() {
             <p className="mt-1 font-mono text-[13px] text-[var(--lime-dim)]">
               {job.org}
             </p>
-            <p className="mt-3 text-[15px] leading-relaxed text-[var(--muted)]">
-              {job.desc}
-            </p>
+            <ul className="mt-3 space-y-2 text-[15px] leading-relaxed text-[var(--muted)]">
+              {job.bullets.map((b) => (
+                <li key={b} className="flex gap-2">
+                  <span className="mt-[0.55em] h-1 w-1 shrink-0 rounded-full bg-[var(--muted)]" />
+                  <span>{b}</span>
+                </li>
+              ))}
+            </ul>
           </li>
         ))}
       </ul>
