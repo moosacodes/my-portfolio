@@ -157,34 +157,34 @@ def build():
     story.append(Paragraph("Experience", s["section"]))
     story.append(hr())
 
-    story.append(row("Software Development Intern — PixelsBoost Website Design", "Milton, ON", s))
-    story.append(Paragraph("Apr 2026 – Aug 2026", s["meta"]))
+    story.append(row("AI Systems Engineering Intern — SYNK", "Remote", s))
+    story.append(Paragraph("Apr 2026 – Sep 2026", s["meta"]))
     story.extend(
         bullets(
             [
-                "Built and deployed full-stack client applications serving 1,000+ users, "
-                "supporting reliable production systems from requirements through launch.",
-                "Integrated secure Stripe payment infrastructure processing over $10,000 "
-                "in transactions while maintaining reliable application workflows.",
-                "Diagnosed and improved application performance by 32% through caching, "
-                "resource optimization, and reduction of network and rendering overhead.",
+                "Analyzed runtime telemetry to enhance platform reliability by 18% "
+                "for over 60 concurrent users.",
+                "Identified performance bottlenecks, leading to a 14% reduction in "
+                "frame-time degradation.",
+                "Conducted stress tests on concurrent workloads, resulting in 12% "
+                "improved system performance through actionable optimization recommendations.",
             ],
             s,
         )
     )
     story.append(Spacer(1, 5))
 
-    story.append(row("Software Engineering Intern — Vibez Music", "Toronto, ON", s))
-    story.append(Paragraph("Jan 2026 – Apr 2026", s["meta"]))
+    story.append(row("Software Engineer Intern — Vibez Music", "Toronto, ON", s))
+    story.append(Paragraph("Jan 2026 – Apr 2026 · Hybrid", s["meta"]))
     story.extend(
         bullets(
             [
-                "Improved internal workflow throughput by 40%+ by developing Python and "
-                "Flask tools that automated repetitive operational processes.",
-                "Improved system reliability and troubleshooting through structured "
-                "logging, request validation, error handling, and traceable service responses.",
-                "Automated testing and deployment with GitHub Actions CI/CD while "
-                "diagnosing and resolving integration and production issues.",
+                "Developed Python and Flask tools that automated operational processes, "
+                "improving workflow throughput by over 40%.",
+                "Enhanced system reliability through structured logging, request "
+                "validation, and error handling.",
+                "Implemented automated testing and deployment using GitHub Actions "
+                "CI/CD, resolving integration and production issues.",
             ],
             s,
         )
