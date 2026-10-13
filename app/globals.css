@@ -3,23 +3,25 @@
 @tailwind utilities;
 
 :root {
-  --os-bg: #030503;
-  --os-window: rgba(8, 12, 9, 0.78);
-  --os-glass: rgba(12, 18, 14, 0.62);
-  --os-border: rgba(168, 230, 120, 0.16);
-  --os-border-strong: rgba(190, 255, 140, 0.38);
-  --os-lime: #9dff72;
-  --os-lime-bright: #c8ff96;
-  --os-lime-dim: #4f8a32;
-  --os-lime-glow: rgba(157, 255, 114, 0.28);
-  --os-text: #f4f7f0;
-  --os-muted: #9aa396;
+  --bg: #0a0a0a;
+  --fg: #f5f5f5;
+  --muted: #a3a3a3;
+  --lime: #a3e635;
+  --lime-dim: rgba(163, 230, 53, 0.75);
+  --line: rgba(255, 255, 255, 0.08);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+.font-hand {
+  font-family: var(--font-hand), ui-rounded, cursive;
+}
+
+html.light {
+  --bg: #f4f4f5;
+  --fg: #0a0a0a;
+  --muted: #525252;
+  --lime: #65a30d;
+  --lime-dim: rgba(101, 163, 13, 0.85);
+  --line: rgba(0, 0, 0, 0.08);
 }
 
 html,
@@ -28,145 +30,58 @@ body {
 }
 
 body {
-  overflow: hidden;
-  font-family: var(--font-body), system-ui, sans-serif;
-  font-size: 15px;
-  background: var(--os-bg);
-  color: var(--os-text);
-  -webkit-font-smoothing: antialiased;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  overflow-x: hidden;
 }
 
-.font-display {
-  font-family: var(--font-display), system-ui, sans-serif;
-}
-
-.font-mono {
-  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-/* Cinematic stage light — one bloom, deep vignette, quiet grain */
-.os-wallpaper {
-  background:
-    radial-gradient(ellipse 52% 42% at 48% 44%, rgba(130, 200, 75, 0.32), transparent 68%),
-    radial-gradient(ellipse 28% 22% at 72% 30%, rgba(90, 150, 50, 0.14), transparent 70%),
-    radial-gradient(ellipse 80% 55% at 50% 110%, rgba(0, 0, 0, 0.94), transparent 55%),
-    linear-gradient(180deg, #070a07 0%, #030503 45%, #010201 100%);
-}
-.os-wallpaper::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 70% 50% at 50% 48%, transparent 20%, rgba(0, 0, 0, 0.45) 100%),
-    linear-gradient(
-      160deg,
-      transparent 40%,
-      rgba(90, 150, 45, 0.06) 62%,
-      transparent 82%
-    );
+/*
+  Grain sits BEHIND content (no mix-blend overlay on Todd).
+  Previous z-50 + overlay was muddying the PNG and flipping sparkle contrast.
+*/
+.site-grain {
   pointer-events: none;
-}
-.os-wallpaper::after {
-  content: "";
-  position: absolute;
+  position: fixed;
   inset: 0;
-  opacity: 0.14;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 180px 180px;
-  mix-blend-mode: soft-light;
-  pointer-events: none;
+  z-index: 0;
+  opacity: 0.09;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-.glass-panel {
-  background: linear-gradient(
-    165deg,
-    rgba(14, 20, 16, 0.92) 0%,
-    rgba(4, 8, 6, 0.96) 100%
-  );
-  border: 1px solid var(--os-border);
-  backdrop-filter: blur(48px) saturate(1.4);
-  -webkit-backdrop-filter: blur(48px) saturate(1.4);
-  box-shadow:
-    0 40px 120px rgba(0, 0, 0, 0.72),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
-    0 1px 0 rgba(220, 255, 180, 0.1) inset;
+html.light .site-grain {
+  opacity: 0.06;
 }
 
-.glass-panel-focus {
-  border-color: var(--os-border-strong);
-  box-shadow:
-    0 48px 140px rgba(0, 0, 0, 0.78),
-    0 0 60px rgba(90, 160, 40, 0.1),
-    0 0 0 1px rgba(255, 255, 255, 0.055) inset,
-    0 1px 0 rgba(220, 255, 180, 0.14) inset;
-}
-
-.glass-bar {
-  background: rgba(3, 6, 4, 0.72);
-  border-color: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(28px) saturate(1.3);
-  -webkit-backdrop-filter: blur(28px) saturate(1.3);
-}
-
-.speech-bubble {
+.site-content {
   position: relative;
-  max-width: min(230px, calc(100vw - 24px));
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: #0c0f0c;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.75);
-  color: #f7faf5;
-  font-family: var(--font-body), system-ui, sans-serif;
-  font-size: 13.5px;
-  font-weight: 500;
-  line-height: 1.35;
-  letter-spacing: -0.015em;
-  padding: 11px 16px;
-  white-space: normal;
-  text-wrap: balance;
-  margin-bottom: 12px;
-}
-.speech-bubble::after {
-  content: "";
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  background: #0c0f0c;
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  transform: rotate(45deg);
-}
-.speech-bubble[data-v="above"]::after {
-  bottom: -5px;
-}
-.speech-bubble[data-v="below"]::after {
-  top: -5px;
-  border-right: none;
-  border-bottom: none;
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-}
-.speech-bubble[data-side="right"]::after {
-  left: 16px;
-}
-.speech-bubble[data-side="left"]::after {
-  right: 16px;
-}
-
-::-webkit-scrollbar {
-  width: 5px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.14);
-  border-radius: 999px;
+  z-index: 1;
 }
 
 ::selection {
-  background: rgba(157, 255, 114, 0.3);
+  background: rgba(163, 230, 53, 0.35);
   color: #fff;
+}
+
+html.light ::selection {
+  color: #0a0a0a;
+}
+
+/* Float only — never scale/squash the PNG (that smears the fuzzy texture) */
+@keyframes todd-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
+.todd-idle {
+  display: block;
+  will-change: transform;
+  animation: todd-float 2.4s ease-in-out infinite;
 }
 
 @keyframes cursor-blink {
@@ -181,11 +96,12 @@ body {
 }
 
 .animate-cursor-blink {
-  animation: cursor-blink 1.05s step-end infinite;
+  animation: cursor-blink 1.05s steps(1, end) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .todd-idle,
   .animate-cursor-blink {
-    animation: none !important;
+    animation: none;
   }
 }
