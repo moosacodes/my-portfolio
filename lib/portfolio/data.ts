@@ -65,28 +65,40 @@ export const PROJECTS = [
 
 export const EXPERIENCE = [
   {
-    role: "Software Development Intern",
-    org: "PixelsBoost Website Design",
-    period: "Apr 2026 – Aug 2026 · Milton, ON",
-    desc: "Built and deployed full-stack client apps serving 1,000+ users from requirements through launch; integrated Stripe processing $10,000+ in transactions; improved performance 32% via caching, resource tuning, and reduced network/rendering overhead.",
+    role: "AI Systems Engineering Intern",
+    org: "SYNK",
+    period: "Apr 2026 – Sep 2026 · Remote",
+    bullets: [
+      "Analyzed runtime telemetry to enhance platform reliability by 18% for over 60 concurrent users.",
+      "Identified performance bottlenecks, leading to a 14% reduction in frame-time degradation.",
+      "Conducted stress tests on concurrent workloads, resulting in 12% improved system performance through actionable optimization recommendations.",
+    ],
   },
   {
-    role: "Software Engineering Intern",
+    role: "Software Engineer Intern",
     org: "Vibez Music",
-    period: "Jan 2026 – Apr 2026 · Toronto, ON",
-    desc: "Improved internal workflow throughput by 40%+ with Python and Flask automation; strengthened reliability via structured logging, request validation, and traceable error handling; automated testing and deployment with GitHub Actions CI/CD.",
+    period: "Jan 2026 – Apr 2026 · Toronto, ON · Hybrid",
+    bullets: [
+      "Developed Python and Flask tools that automated operational processes, improving workflow throughput by over 40%.",
+      "Enhanced system reliability through structured logging, request validation, and error handling.",
+      "Implemented automated testing and deployment using GitHub Actions CI/CD, resolving integration and production issues.",
+    ],
   },
   {
     role: "Academic Tutor & Mentor",
     org: "Licensed2Learn",
     period: "Nov 2024 – Jan 2025",
-    desc: "Provided one-on-one tutoring in Math, CS, and English, helping students improve understanding and performance.",
+    bullets: [
+      "Provided one-on-one tutoring in Math, CS, and English, helping students improve understanding and performance.",
+    ],
   },
   {
     role: "Social Media Marketing Intern",
     org: "Mind4Youth",
     period: "Nov 2024 – Dec 2024",
-    desc: "Helped grow Instagram engagement by 25% through targeted content and campaign visuals.",
+    bullets: [
+      "Helped grow Instagram engagement by 25% through targeted content and campaign visuals.",
+    ],
   },
 ] as const;
 
