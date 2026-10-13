@@ -241,15 +241,14 @@ export function ToddCharacter({
 
   // Use layered eyes when looking/blinking; pose sheets for locomotion
   const usePoseSheet = deform.pose !== "canonical";
+  // Always prefer the exact canonical PNG at rest; pose sheets only for locomotion
   const bodySrc = usePoseSheet
     ? deform.pose === "walkA"
       ? TODD_LAYOUT.assets.walkA
       : deform.pose === "walkB"
         ? TODD_LAYOUT.assets.walkB
         : TODD_LAYOUT.assets.jump
-    : lookActive
-      ? TODD_LAYOUT.assets.body
-      : TODD_LAYOUT.assets.canonical;
+    : TODD_LAYOUT.assets.canonical;
 
   const showLayers = lookActive;
   const lidAmount = isSleep ? 1 : blink;
@@ -268,11 +267,10 @@ export function ToddCharacter({
       aria-hidden
     >
       <div
-        className="relative h-full w-full will-change-transform"
+        className="relative h-full w-full"
         style={{
           transform: `translateY(${deform.y}px) rotate(${deform.rot}deg) scale(${deform.sx}, ${deform.sy})`,
           transformOrigin: "50% 90%",
-          filter: "drop-shadow(0 14px 28px rgba(0,0,0,0.5))",
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}

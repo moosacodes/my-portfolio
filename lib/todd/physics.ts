@@ -184,9 +184,9 @@ export function readPlatforms(
     const id = el.dataset.toddWindow || "window";
     const r = el.getBoundingClientRect();
     if (r.width < 80 || r.height < 60) return;
-    // Prefer right edge perch (mockup)
-    const perchX = clamp(r.right - size * 0.72, 8, vw - size - 8);
-    const perchY = clamp(r.top - size * 0.52, 44, vh - 120 - size);
+    // Sit on the title-bar lip toward the right, fully inside the viewport
+    const perchX = clamp(r.left + r.width * 0.58 - size * 0.15, 12, vw - size - 24);
+    const perchY = clamp(r.top - size * 0.32, 52, vh - 130 - size);
     platforms.push({
       id: `window-${id}`,
       kind: "window",

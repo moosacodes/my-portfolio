@@ -42,8 +42,8 @@ type Mode =
   | "drag"
   | "fall";
 
-const SIZE_DESKTOP = 152;
-const SIZE_MOBILE = 88;
+const SIZE_DESKTOP = 168;
+const SIZE_MOBILE = 96;
 const STATUS = 44;
 const DOCK = 108;
 
@@ -209,8 +209,9 @@ export function ToddStage({ layout, viewport }: Props) {
     modeRef.current = "idle";
     setFacing(-1);
     idleSince.current = performance.now();
-    // Hold the hero perch longer so first paint isn't Todd on the dock
-    nextDecisionAt.current = performance.now() + 14000;
+    // Hold the hero perch hard — roaming waits for chaos or a long idle
+    lastLandmarkId.current = p.id;
+    nextDecisionAt.current = performance.now() + 45000;
     bootedRef.current = true;
   }, [terminalPerch]);
 
@@ -351,74 +352,64 @@ export function ToddStage({ layout, viewport }: Props) {
       const chaosBoost = chaos ? 0.22 : 0;
       const cool = (base: number) => now + (chaos ? base * 0.55 : base);
 
-      // Weighted autonomous brain — chaos = more frequent + spicier picks
-      if (roll < 0.3 + chaosBoost) {
-        const mark = pickLandmark(marks, {
-          prefer: ["floor", "wander", "dock"],
-          avoidId: lastLandmarkId.current,
-          from,
-          minDist: 120,
-        });
-        if (mark) {
-          beginTravel(mark, "travel");
-          nextDecisionAt.current = cool(9000);
-          return;
+      // Hero lock: without chaos, Todd never leaves the terminal perch
+      if (!chaos) {
+        const home = terminalPerch();
+        if (home && dist(from, home) > 24) {
+          beginTravel(home, "travel");
+        } else if (roll < 0.55) {
+          trySetState("look", true);
+        } else if (roll < 0.7) {
+          say(SURPRISES[Math.floor(Math.random() * SURPRISES.length)]);
         }
+        nextDecisionAt.current = cool(14000);
+        return;
       }
 
-      if (roll < 0.55 + chaosBoost) {
+      // Chaos mode — roam / hide / nap
+      if (roll < 0.35) {
         const mark = pickLandmark(marks, {
-          prefer: ["perch"],
+          prefer: ["hide", "dock", "wander", "floor"],
           avoidId: lastLandmarkId.current,
           from,
-          minDist: 80,
+          minDist: 100,
         });
         if (mark) {
           beginTravel(
             mark,
             "travel",
-            Math.random() < 0.45 ? "up we go" : undefined
+            mark.kind === "hide" ? "you'll never find me" : undefined
           );
-          nextDecisionAt.current = cool(10000);
+          nextDecisionAt.current = cool(9000);
           return;
         }
       }
 
-      if (roll < 0.72 + chaosBoost) {
-        const mark = pickLandmark(marks, {
-          prefer: ["hide"],
-          avoidId: lastLandmarkId.current,
-        });
-        if (mark) {
-          beginTravel(mark, "travel", "you'll never find me");
-          nextDecisionAt.current = cool(11000);
-          return;
-        }
-      }
-
-      if (roll < 0.82) {
+      if (roll < 0.55) {
         modeRef.current = "sleep";
-        modeUntil.current = now + 5000 + Math.random() * 6000;
+        modeUntil.current = now + 4000 + Math.random() * 5000;
         trySetState("sleep", true);
         say("power nap…");
         nextDecisionAt.current = cool(14000);
         return;
       }
 
-      if (roll < 0.92) {
-        say(SURPRISES[Math.floor(Math.random() * SURPRISES.length)]);
-        trySetState("look", true);
-        nextDecisionAt.current = cool(8000);
-        return;
+      if (roll < 0.8) {
+        const mark = pickLandmark(marks, {
+          prefer: ["perch"],
+          avoidId: lastLandmarkId.current,
+          from,
+          minDist: 60,
+        });
+        if (mark) {
+          beginTravel(mark, "travel");
+          nextDecisionAt.current = cool(10000);
+          return;
+        }
       }
 
-      const home = terminalPerch();
-      if (home) {
-        beginTravel(home, "travel", "back to my perch");
-        nextDecisionAt.current = cool(12000);
-      } else {
-        nextDecisionAt.current = cool(8000);
-      }
+      trySetState("look", true);
+      nextDecisionAt.current = cool(8000);
     },
     [
       viewport.width,
@@ -533,37 +524,43 @@ export function ToddStage({ layout, viewport }: Props) {
       let body = bodyRef.current;
       hopCooldown.current = Math.max(0, hopCooldown.current - dt);
 
-      // Follow moving perch while idle on a window
-      if (modeRef.current === "idle" && body.platformId?.startsWith("window-")) {
-        const id = body.platformId.replace("window-", "");
-        const marks = readLandmarks(viewport.width, viewport.height, size);
-        const perch = marks.find((m) => m.id === `perch-${id}`);
-        if (perch) {
-          const follow = Math.min(1, dt * 8);
+      // Hero pin: idle Todd sticks to the terminal perch (chaos can leave)
+      if (modeRef.current === "idle") {
+        const home =
+          (!chaos && terminalPerch()) ||
+          (body.platformId?.startsWith("window-")
+            ? readLandmarks(viewport.width, viewport.height, size).find(
+                (m) => m.id === `perch-${body.platformId!.replace("window-", "")}`
+              )
+            : null);
+        if (home) {
+          const follow = Math.min(1, dt * 10);
           body = {
             ...body,
             pos: {
-              x: body.pos.x + (perch.x - body.pos.x) * follow,
-              y: body.pos.y + (perch.y - body.pos.y) * follow,
+              x: body.pos.x + (home.x - body.pos.x) * follow,
+              y: body.pos.y + (home.y - body.pos.y) * follow,
             },
             vel: { x: 0, y: 0 },
             grounded: true,
+            platformId: home.platformId ?? body.platformId,
           };
+          if (landHold.current > 0) {
+            landHold.current -= dt;
+            setSquashY(1.12);
+          } else {
+            setSquashY(1);
+          }
+          if (Math.random() < dt * 0.12) trySetState("look");
+          else trySetState("idle");
+          setHidePeek(0);
+          bodyRef.current = body;
+          setRenderPos({ ...body.pos });
+          // Still allow rare look/say decisions while locked
+          if (!chaos) decide(now);
+          raf = requestAnimationFrame(tick);
+          return;
         }
-        if (landHold.current > 0) {
-          landHold.current -= dt;
-          setSquashY(1.12);
-        } else {
-          setSquashY(1);
-        }
-        // Soft idle anim
-        if (Math.random() < dt * 0.15) trySetState("look");
-        else trySetState("idle");
-        setHidePeek(0);
-        bodyRef.current = body;
-        setRenderPos({ ...body.pos });
-        raf = requestAnimationFrame(tick);
-        return;
       }
 
       if (modeRef.current === "hide" && !targetRef.current) {
@@ -807,6 +804,7 @@ export function ToddStage({ layout, viewport }: Props) {
     decide,
     trySetState,
     say,
+    terminalPerch,
     // Window geometry — perch follow reads live DOM; deps keep sim aware of moves
     windows,
   ]);
@@ -996,6 +994,21 @@ export function ToddStage({ layout, viewport }: Props) {
     return null;
   }
 
+  // Hero lock: TerminalTodd on the window owns the mascot look;
+  // stage Todd only appears for chaos / locomotion / dance.
+  const stageActive =
+    chaos ||
+    state === "dance" ||
+    state === "walk" ||
+    state === "hop" ||
+    state === "commanded" ||
+    state === "dragged" ||
+    state === "fall";
+  const heroLock =
+    !stageActive &&
+    Boolean(windows.terminal?.open && !windows.terminal?.minimized);
+  if (heroLock) return null;
+
   const bubbleW = 220;
   const bubbleH = 56;
   const preferLeft = renderPos.x + size * 0.55 + bubbleW > viewport.width - 20;
@@ -1019,8 +1032,8 @@ export function ToddStage({ layout, viewport }: Props) {
 
   return (
     <div
-      className="pointer-events-none absolute inset-0 overflow-visible"
-      style={{ zIndex: zBoost }}
+      className="pointer-events-none fixed inset-0 overflow-visible"
+      style={{ zIndex: 200 }}
     >
       <AnimatePresence>
         {speech && (
