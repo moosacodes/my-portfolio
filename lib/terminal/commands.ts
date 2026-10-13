@@ -161,7 +161,7 @@ export function runCommand(
           ...EXPERIENCE.flatMap((e) => [
             `${e.role} — ${e.org}`,
             `  ${e.period}`,
-            `  ${e.desc}`,
+            ...e.bullets.map((b) => `  • ${b}`),
             "",
           ]),
           "Opened experience window.",
