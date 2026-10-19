@@ -22,7 +22,8 @@ type Props = {
 
 export function SiteNav({ active = "home" }: Props) {
   return (
-    <header className="pointer-events-none absolute inset-x-0 top-0 z-40 flex justify-end px-4 pt-6 sm:px-10 sm:pt-8">
+    <header className="pointer-events-none absolute inset-x-0 top-0 z-40 flex items-center justify-between px-6 pt-6 sm:px-10 sm:pt-8 lg:px-16">
+      <a href="#" className="pointer-events-auto font-mono text-xs font-medium tracking-[.18em] text-[var(--fg)]">MA<span className="text-[var(--lime)]">_</span></a>
       <nav
         aria-label="Primary"
         className="pointer-events-auto flex items-center gap-3 sm:gap-6"
