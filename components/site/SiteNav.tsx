@@ -2,12 +2,18 @@
 
 import { ThemeToggle } from "@/components/site/ThemeToggle";
 
-const LINKS = [
+type NavLink = {
+  id: string;
+  label: string;
+  href?: string;
+};
+
+const LINKS: NavLink[] = [
   { id: "home", label: "home" },
   { id: "about", label: "about" },
   { id: "experience", label: "experience" },
   { id: "projects", label: "projects" },
-  { id: "blog", label: "blog", href: "https://github.com/moosacodes" },
+  { id: "contact", label: "contact" },
 ] as const;
 
 type Props = {

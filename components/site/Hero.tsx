@@ -1,52 +1,31 @@
 "use client";
 
 import { SocialRow } from "@/components/site/SocialRow";
-import { CodeWindow } from "@/components/site/CodeWindow";
+import { SystemIllustration } from "@/components/site/SystemIllustration";
+import { PROFILE } from "@/lib/portfolio/data";
 
 export function Hero() {
   return (
-    <section
-      id="home"
-      className="relative flex min-h-[100dvh] items-center px-6 pb-36 pt-24 sm:px-10 lg:px-14 xl:px-16"
-    >
-      <div className="mx-auto grid w-full max-w-[1280px] items-center gap-12 lg:grid-cols-[0.95fr_1.15fr] lg:gap-12 xl:gap-16">
-        {/* left column */}
-        <div className="relative max-w-[440px]">
-          {/* Perch marker — PlayfulTodd starts / returns here */}
-          <div
-            data-todd-home
-            className="mb-6 h-[96px] w-[96px]"
-            aria-hidden
-          />
-
-          <h1 className="font-sans text-[52px] font-bold leading-[0.95] tracking-[-0.045em] sm:text-[64px] md:text-[72px]">
-            <span className="block text-[var(--fg)]">Moosa</span>
-            <span className="block text-[var(--lime)]">Alam.</span>
+    <section id="home" className="relative px-6 pb-24 pt-32 sm:px-10 sm:pt-40 lg:px-16 lg:pb-32">
+      <div className="mx-auto grid w-full max-w-[1240px] items-center gap-14 lg:grid-cols-[.88fr_1.12fr] lg:gap-20">
+        <div className="relative max-w-xl">
+          <div data-todd-home className="absolute -top-20 left-0 h-12 w-12" aria-hidden />
+          <p className="mb-6 font-mono text-xs uppercase tracking-[.24em] text-[var(--lime)]">Moosa Alam / systems builder</p>
+          <h1 className="font-sans text-[clamp(3.4rem,8vw,7rem)] font-semibold leading-[.9] tracking-[-.07em]">
+            Making<br /><span className="text-[var(--lime)]">invisible systems</span><br />visible.
           </h1>
-
-          <p className="mt-5 max-w-[28rem] font-sans text-[15px] leading-[1.65] text-[var(--muted)] sm:text-[16px]">
-            CS student @ UofG, interested in systems, infrastructure and
-            cybersecurity.
+          <p className="mt-8 max-w-lg text-lg leading-[1.6] text-[var(--muted)]">
+            Computer Science co-op student at the University of Guelph. I build and investigate the layers underneath reliable software: Linux, networks, cloud infrastructure, and automation.
           </p>
-
+          <div className="mt-9 flex flex-wrap gap-3">
+            <a href="#projects" className="button-primary">Explore work <span aria-hidden>↓</span></a>
+            <a href={PROFILE.resumePdf} target="_blank" rel="noreferrer" className="button-secondary">Open résumé</a>
+            <a href={`mailto:${PROFILE.email}`} className="button-secondary">Contact</a>
+          </div>
           <SocialRow />
-
-          <a
-            href="#projects"
-            className="mt-9 inline-flex items-center gap-2 font-mono text-[15px] text-[var(--lime)] transition hover:brightness-110"
-          >
-            <span>$</span>
-            <span className="text-[var(--fg)]">open projects</span>
-            <span
-              className="ml-0.5 inline-block h-[1.05em] w-[0.55em] animate-cursor-blink bg-[var(--fg)]"
-              aria-hidden
-            />
-          </a>
         </div>
-
-        {/* right column */}
-        <div className="relative flex justify-center lg:justify-end lg:pr-2">
-          <CodeWindow />
+        <div className="relative">
+          <SystemIllustration />
         </div>
       </div>
     </section>

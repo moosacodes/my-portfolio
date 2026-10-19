@@ -44,8 +44,11 @@ export function Portfolio() {
           <ExperienceSection />
           <ProjectsSection />
         </main>
-        <footer className="border-t border-[var(--line)] px-6 py-10 text-center font-mono text-[12px] text-[var(--muted)] sm:px-10">
-          © {new Date().getFullYear()} Moosa Alam
+        <footer id="contact" className="border-t border-[var(--line)] px-6 py-16 sm:px-10 lg:px-16">
+          <div className="mx-auto flex max-w-[1120px] flex-col justify-between gap-8 sm:flex-row sm:items-end">
+            <div><p className="font-mono text-xs uppercase tracking-[.2em] text-[var(--lime)]">Have a systems problem?</p><h2 className="mt-3 text-3xl font-semibold tracking-tight">Let’s talk about it.</h2><a className="mt-4 inline-block text-[var(--muted)] underline decoration-[var(--lime)] underline-offset-4 hover:text-[var(--fg)]" href="mailto:malam20@uoguelph.ca">malam20@uoguelph.ca</a></div>
+            <div className="text-left font-mono text-xs text-[var(--muted)] sm:text-right"><p>© {new Date().getFullYear()} Moosa Alam</p><p className="mt-2">Milton, Ontario · available for relevant opportunities</p></div>
+          </div>
         </footer>
         <PlayfulTodd />
       </div>
