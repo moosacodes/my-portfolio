@@ -22,23 +22,23 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "Moosa Alam",
+  title: "Moosa Alam — Systems, cloud & networking",
   description:
-    "CS student @ UofG, interested in systems, infrastructure and cybersecurity.",
+    "Moosa Alam is a University of Guelph Computer Science co-op student building systems, networking, cloud infrastructure, and automation projects.",
   metadataBase: process.env.NEXT_PUBLIC_SITE_URL
     ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
     : undefined,
   openGraph: {
-    title: "Moosa Alam",
+    title: "Moosa Alam — Systems, cloud & networking",
     description:
-      "CS student @ UofG, interested in systems, infrastructure and cybersecurity.",
+      "Computer Science co-op student building and investigating the layers underneath reliable software.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Moosa Alam",
+    title: "Moosa Alam — Systems, cloud & networking",
     description:
-      "CS student @ UofG, interested in systems, infrastructure and cybersecurity.",
+      "Computer Science co-op student building and investigating the layers underneath reliable software.",
   },
   robots: "index, follow",
 };

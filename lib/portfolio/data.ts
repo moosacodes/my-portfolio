@@ -1,7 +1,7 @@
 export const PROFILE = {
   fullName: "Moosa Alam",
   shortName: "Moosa",
-  tagline: "Computer Science @ Guelph · Systems · Cloud · Security",
+  tagline: "Computer Science @ Guelph · Systems · Cloud · Networking",
   location: "Milton, Ontario",
   status: "Open to work",
   email: "malam20@uoguelph.ca",
@@ -10,14 +10,14 @@ export const PROFILE = {
   linkedin: "https://www.linkedin.com/in/moosa-alam",
   resumePdf: "/Moosa_Alam_Networking_Resume.pdf",
   resumePath: "/resume",
-  lastUpdated: "September 2026",
+  lastUpdated: "October 2026",
   osVersion: "1.0.0",
 } as const;
 
 export const ABOUT = {
   paragraphs: [
-    "Computer Science student at the University of Guelph focused on systems, cloud infrastructure, and security.",
-    "Right now I'm building networking and Linux depth through hands-on labs, studying for AWS Cloud Practitioner and CCNA, and looking for infra, cloud, and networking co-op roles.",
+    "Computer Science co-op student at the University of Guelph, building depth in systems programming, Linux, networking, cloud infrastructure, and automation.",
+    "I’m developing toward AI/HPC infrastructure and high-performance networking through hands-on labs and careful troubleshooting. I’m looking for software, systems, cloud, and networking opportunities.",
   ],
   pathIntro:
     "A technical roadmap toward systems, cloud infrastructure, and security engineering.",
@@ -25,7 +25,7 @@ export const ABOUT = {
     {
       when: "Now",
       title: "Foundation",
-      desc: "Systems and networking fundamentals, infrastructure labs, and AWS Cloud Practitioner / CCNA preparation.",
+      desc: "Systems and networking fundamentals, infrastructure labs, and a growing Linux and cloud toolkit.",
     },
     {
       when: "Next",
@@ -104,21 +104,21 @@ export const EXPERIENCE = [
 
 export const EDUCATION = {
   school: "University of Guelph",
-  expected: "Expected Dec 2028",
+  expected: "Expected April 2029",
   degree: "Bachelor of Computing (Co-op) · Computer Science",
   emphasis: "Area of emphasis: Cybersecurity",
   bullets: [
     "Coursework spanning systems, networking, databases, cloud, and security.",
     "Co-op stream with industry placements alongside technical projects.",
-    "Planning undergraduate research in systems, cloud, or security topics.",
+    "Area of emphasis: Cybersecurity, with broader interests in systems and infrastructure.",
   ],
 } as const;
 
 export const CERTIFICATIONS = [
   {
     title: "AWS Certified Cloud Practitioner",
-    meta: "In progress · Amazon Web Services",
-    done: false,
+    meta: "Certified · Amazon Web Services",
+    done: true,
   },
   {
     title: "CCNA",
@@ -157,6 +157,19 @@ export const SKILLS = {
   ],
   focus: ["Networking", "Systems", "Cloud", "Security"],
 } as const;
+
+export const LEADERSHIP = [
+  {
+    role: "Technical Lead",
+    org: "The J Healthcare Initiative",
+    desc: "Leading technical work and helping translate project goals into dependable, maintainable systems.",
+  },
+  {
+    role: "Events Chair",
+    org: "University of Guelph Cloud Computing Club",
+    desc: "Organizing technical events that connect students with practical cloud and infrastructure work.",
+  },
+] as const;
 
 export type AppId =
   | "about"
