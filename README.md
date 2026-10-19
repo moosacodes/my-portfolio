@@ -1,13 +1,12 @@
-# MOOSA.OS — Moosa Alam
+# Moosa Alam — portfolio
 
-Interactive desktop-style portfolio for Moosa Alam, featuring **Todd**, a lime-green frog mascot. Built with Next.js (App Router), static export, deployed on Vercel.
+An illustrated engineering workbench for Moosa Alam: a University of Guelph Computer Science co-op student interested in systems, Linux, networking, cloud infrastructure, and automation. Built with Next.js (App Router), static export, and Vercel deployment foundations.
 
 ## Tech stack
 
 - **Next.js 15** — App Router, `output: "export"`
-- **TypeScript · Tailwind CSS · Framer Motion**
+- **TypeScript · Tailwind CSS**
 - **@vercel/analytics**
-- Three.js is installed but unused in MOOSA.OS (kept for possible future experiments)
 
 ## Development
 
@@ -24,44 +23,33 @@ Static export is configured in `next.config.ts`.
 
 Optional: set `NEXT_PUBLIC_SITE_URL` (e.g. `https://moosaalam.vercel.app`) for canonical / Open Graph URLs.
 
+## Design system
+
+- Warm off-white paper, deep ink, and a single moss green accent.
+- Georgia display type paired with Outfit body copy and small JetBrains Mono annotations.
+- Lightweight SVG drawings use topology, cables, ruled marks, and labeled inspection points.
+- Motion is limited to Todd's explicit reactions and the user-controlled packet journey; reduced motion disables character movement.
+
 ## Architecture
 
 | Path | Role |
 |------|------|
-| `components/os/` | Desktop shell, status bar, dock, window frames, mobile sheets |
-| `components/apps/` | About, Projects, Experience, Skills, Education, Terminal, Resume, Contact |
-| `components/todd/` | Todd stage, layered rig, movement |
+| `components/site/Portfolio.tsx` | Workbench homepage, illustrations, project explanations, and interactions |
+| `app/projects/user-space-vpn-tunnel/` | Source-backed VPN case study |
+| `components/os/` | Existing desktop experiments and supporting routes |
+| `components/todd/` | Existing Todd stage, layered rig, and lab route |
 | `lib/portfolio/data.ts` | Single source of truth for profile content |
 | `lib/os/window-store.tsx` | Window open/focus/minimize/maximize/close |
 | `lib/terminal/commands.ts` | Safe frontend command interpreter |
 | `lib/todd/todd-store.tsx` | Shared Todd state (UI + terminal) |
 | `public/todd/` | Mascot artwork |
 
-## Controls
+## Interactions
 
-**Desktop**
-
-- Dock / desktop icons open apps
-- Drag window title bars; traffic-light buttons close / minimize / maximize
-- Escape minimizes the focused window
-- Status bar: Pause Todd · clock · chaos indicator
-
-**Terminal** (safe interpreter — never runs a real shell)
-
-- `help`, `whoami`, `about`, `projects`, `experience`, `skills`, `education`
-- `resume`, `contact`, `github`, `open <app>`, `clear`, `history`
-- Todd: `todd dance | sleep | come | status | chaos | pause | resume | help`
-- Easter eggs: `sudo hire moosa`, `todd dance`, `todd chaos`
-- ↑/↓ history · Tab autocomplete
-
-**Todd**
-
-- Hover — pupils track cursor
-- Click — startled hop (escalates if spam-clicked)
-- Drag — wiggle, then land
-- Idle — occasional explore / nap when chaos allows
-- `prefers-reduced-motion` and Pause Todd freeze autonomous motion
-- Stage is `pointer-events: none` except Todd and marked safe controls (`data-todd-safe`)
+- Select the router, packet, or service host in the hero illustration for a concise explanation.
+- Click Todd once to wake him, then again to trigger a short hop inside his reserved ledge.
+- Start/reset the packet journey in the VPN project section. It is explicitly an illustrative simulation.
+- All controls are keyboard reachable and support reduced-motion preferences.
 
 ## Asset provenance
 
@@ -72,7 +60,7 @@ Optional: set `NEXT_PUBLIC_SITE_URL` (e.g. `https://moosaalam.vercel.app`) for c
 | `public/todd/todd-jump.png` | Jump / airborne pose |
 | `public/todd/todd-startled.png` / `todd-dance.png` | Reaction / dance poses |
 
-Todd uses a **pose sprite set + layered eye/lid/bow overlays** on the canonical idle art, driven by a physics/FSM movement engine (velocity, gravity, jump arcs, landmarks). Pose frames were derived from the original art; artist-authored matching frames would further improve style consistency.
+The homepage deliberately uses the existing canonical idle and jump assets only. It does not claim blinking, walking, or articulated movement from the flattened artwork.
 
 ## Resume
 
