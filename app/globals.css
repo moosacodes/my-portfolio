@@ -69,6 +69,12 @@ body {
 .map-packet { filter: drop-shadow(0 0 4px var(--lime)); }
 .map-route { opacity: .85; }
 
+@media (max-width: 639px) {
+  .todd-companion {
+    display: none;
+  }
+}
+
 body {
   background: var(--bg);
   color: var(--fg);

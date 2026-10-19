@@ -22,14 +22,14 @@ type Props = {
 
 export function SiteNav({ active = "home" }: Props) {
   return (
-    <header className="pointer-events-none absolute inset-x-0 top-0 z-40 flex justify-end px-6 pt-7 sm:px-10 sm:pt-8">
+    <header className="pointer-events-none absolute inset-x-0 top-0 z-40 flex justify-end px-4 pt-6 sm:px-10 sm:pt-8">
       <nav
         aria-label="Primary"
-        className="pointer-events-auto flex items-center gap-5 sm:gap-6"
+        className="pointer-events-auto flex items-center gap-3 sm:gap-6"
       >
         {LINKS.map((link) => {
           const isActive = active === link.id;
-          const className = `relative font-sans text-[14px] tracking-[-0.01em] transition ${
+          const className = `relative font-sans text-[12px] tracking-[-0.01em] transition sm:text-[14px] ${
             isActive
               ? "text-[var(--fg)]"
               : "text-[var(--muted)] hover:text-[var(--fg)]"

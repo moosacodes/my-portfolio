@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { PROJECTS } from "@/lib/portfolio/data";
-
 const NODES = [
   { id: "client", label: "client", x: 12, y: 50, detail: "A request starts here and enters the lab through a defined interface." },
   { id: "router", label: "router", x: 38, y: 28, detail: "Routes traffic between isolated networks and makes the path observable." },
