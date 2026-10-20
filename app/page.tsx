@@ -1,5 +1,5 @@
-import { Portfolio } from "@/components/site/Portfolio";
+import { WorkshopPortfolio } from "@/components/portfolio/WorkshopPortfolio";
 
 export default function Home() {
-  return <Portfolio />;
+  return <WorkshopPortfolio />;
 }

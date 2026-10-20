@@ -1,0 +1,14 @@
+.page{--bg:#171a19;--ink:#e9e4d8;--muted:#aeb3a5;--accent:#e1a23b;--deep:#252c29;--line:#4e5b50;min-height:100vh;background:var(--bg);color:var(--ink);font-family:Arial,sans-serif}
+.nav{max-width:1296px;margin:auto;padding:24px 20px;border-bottom:1px solid var(--line);font:12px "Courier New",monospace}
+.nav a{text-decoration:underline;text-underline-offset:4px}
+.main{max-width:1296px;margin:auto;padding:90px 20px}
+.kicker{font:11px "Courier New",monospace;text-transform:uppercase;letter-spacing:.12em;color:var(--accent)}
+.main h1{font:700 clamp(50px,9vw,130px)/.82 "Courier New",monospace;letter-spacing:-.12em;text-transform:uppercase;max-width:950px;margin:20px 0 30px}
+.intro{font:20px/1.5 Georgia,serif;color:var(--muted);max-width:680px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);margin-top:80px}
+.grid section{background:var(--bg);padding:25px}
+.grid h2{font:12px "Courier New",monospace;color:var(--accent);text-transform:uppercase}
+.grid p,.grid li{color:var(--muted);line-height:1.7}.grid ul{padding-left:20px}
+.source{display:inline-block;margin-top:35px;background:var(--accent);color:var(--deep);padding:14px 17px;font:12px "Courier New",monospace}
+.contact{font:12px "Courier New",monospace;color:var(--muted);margin-top:35px}.contact a{text-decoration:underline}
+@media(max-width:600px){.main{padding:60px 18px}.grid{grid-template-columns:1fr;margin-top:50px}.main h1{font-size:52px}.intro{font-size:18px}}

@@ -22,21 +22,21 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "Moosa Alam — Systems, cloud & networking",
+  title: "Moosa Alam — MOOSA.EXE",
   description:
-    "Moosa Alam is a University of Guelph Computer Science co-op student building systems, networking, cloud infrastructure, and automation projects.",
+    "Moosa Alam is a University of Guelph Computer Science student building and investigating systems, networking, cloud infrastructure, and automation projects.",
   metadataBase: process.env.NEXT_PUBLIC_SITE_URL
     ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
     : undefined,
   openGraph: {
-    title: "Moosa Alam — Systems, cloud & networking",
+    title: "Moosa Alam — MOOSA.EXE",
     description:
       "Computer Science co-op student building and investigating the layers underneath reliable software.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Moosa Alam — Systems, cloud & networking",
+    title: "Moosa Alam — MOOSA.EXE",
     description:
       "Computer Science co-op student building and investigating the layers underneath reliable software.",
   },
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f4f0e8",
+  themeColor: "#171a19",
 };
 
 export default function RootLayout({

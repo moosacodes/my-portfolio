@@ -1,0 +1,21 @@
+.contactPopover{display:grid;gap:7px;border:1px solid var(--line);padding:12px;width:max-content;max-width:100%;font:11px "Courier New",monospace;color:var(--muted)}
+.contactPopover a{text-decoration:underline;text-underline-offset:3px}
+.projectList,.experienceList{max-width:1296px;margin:auto}
+.projectLinks{display:flex;flex-wrap:wrap;gap:20px}
+.aboutGrid{max-width:1296px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:70px}
+.aboutCopy{font:20px/1.65 Georgia,serif;color:var(--muted);max-width:600px}
+.aboutFacts{display:grid;gap:25px}
+.aboutFacts>div{display:grid;gap:9px;border-top:1px solid var(--line);padding-top:13px}
+.aboutFacts span,.skillsStrip>span{font:10px "Courier New",monospace;color:var(--accent);letter-spacing:.1em}
+.aboutFacts strong{font:14px Arial,sans-serif;font-weight:normal}
+.aboutFacts small{display:block;color:var(--muted);font:12px/1.5 "Courier New",monospace;margin-top:4px}
+.skillsStrip{max-width:1296px;margin:70px auto 0;border-top:1px solid var(--line);padding-top:20px;display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.skillsStrip>span{width:100%;margin-bottom:4px}
+.skillsStrip b{border:1px solid var(--line);padding:7px 9px;font:10px "Courier New",monospace;font-weight:normal;color:var(--muted)}
+.contactGrid{max-width:1296px;margin:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.contactLink{border:1px solid var(--line);padding:18px;display:grid;gap:25px;font:11px "Courier New",monospace;color:var(--accent)}
+.contactLink:hover{background:var(--deep);color:var(--ink)}
+.contactLink strong{font-size:12px;font-weight:normal;color:var(--muted);overflow-wrap:anywhere}
+.workshop .contactLink:hover{color:var(--accent)}
+@media(max-width:900px){.aboutGrid{grid-template-columns:1fr;gap:35px}.contactGrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.contactGrid{grid-template-columns:1fr}.aboutCopy{font-size:18px}}

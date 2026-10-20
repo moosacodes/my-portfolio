@@ -58,7 +58,7 @@ export const PROJECTS = [
   },
   {
     name: "User-Space VPN Tunnel",
-    desc: "Python, Linux, TUN/TAP, UDP, Wireshark · Point-to-point VPN that encapsulates and routes IP packets between isolated endpoints with forwarding, NAT, firewall rules, and authenticated encryption.",
+    desc: "Python, Linux, TUN/TAP, UDP, Wireshark · Point-to-point learning tunnel that encapsulates and routes IP packets between isolated endpoints with forwarding, NAT, firewall rules, and a framed UDP transport.",
     href: "https://github.com/moosacodes/User-Space-VPN-Tunnel",
   },
 ] as const;
