@@ -1,510 +1,143 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import {
-  ABOUT,
-  CERTIFICATIONS,
-  EDUCATION,
-  EXPERIENCE,
-  LEADERSHIP,
-  PROFILE,
-  PROJECTS,
-  SKILLS,
-} from "@/lib/portfolio/data";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { PROFILE } from "@/lib/portfolio/data";
 import styles from "./WorkshopPortfolio.module.css";
 
-type StopId = "home" | "network" | "tunnel";
-type SkillGroup = keyof typeof SKILLS;
+type LocationId = "square" | "reliability" | "radar" | "foundry" | "watchtower" | "tunnel" | "guild" | "comms";
+type Project = { name: string; summary: string; stack: string; metrics: string[]; href?: string };
+type Location = { id: LocationId; mapLabel: string; eyebrow: string; title: string; question: string; intro: string; x: number; y: number; kind: string; projects?: Project[] };
 
-const MAP_STOPS: {
-  id: StopId;
-  x: number;
-  y: number;
-  label: string;
-  title: string;
-  note: string;
-}[] = [
-  {
-    id: "home",
-    x: 15,
-    y: 73,
-    label: "START",
-    title: "Guelph Field Notes",
-    note: "Computer Science co-op student, learning by building and testing real systems.",
-  },
-  {
-    id: "network",
-    x: 50,
-    y: 51,
-    label: "LAB 01",
-    title: "Network Home Lab",
-    note: "A segmented virtual network with routing, DNS, DHCP, NAT, and packet captures.",
-  },
-  {
-    id: "tunnel",
-    x: 82,
-    y: 34,
-    label: "LAB 02",
-    title: "User-Space VPN Tunnel",
-    note: "A learning tunnel that follows IPv4 packets from TUN devices through framed UDP.",
-  },
+const LOCATIONS: Location[] = [
+  { id: "square", mapLabel: "SIGNAL SQUARE", eyebrow: "PLAYER FILE 001", title: "Moosa Alam", question: "Who built this place?", intro: "Computer Science co-op student at the University of Guelph. I build reliable cloud, backend, networking, and security systems—and I measure what improves.", x: 50, y: 57, kind: "square" },
+  { id: "reliability", mapLabel: "RELIABILITY STN.", eyebrow: "CORE QUEST 01", title: "Reliability Station", question: "Can he keep systems alive?", intro: "Infrastructure that recovers quickly, reports its own failures, and can be rebuilt without guesswork.", x: 22, y: 25, kind: "station", projects: [
+    { name: "Cloud-Native Reliability Platform", summary: "A five-service Kubernetes platform engineered for observable, recoverable delivery.", stack: "Kubernetes · AWS · Terraform · Docker", metrics: ["12K+ req/min", "<60s recovery", "95%+ failures caught <45s"] },
+    { name: "InfraPulse", summary: "Reproducible AWS infrastructure with SLOs, failure injection, and actionable alerts.", stack: "Python · AWS · Terraform · Docker", metrics: ["<10m full rebuild", "4 failure modes", "3 SLIs · 1 SLO"], href: "https://github.com/moosacodes/InfraPulse" },
+  ] },
+  { id: "radar", mapLabel: "RADAR OBSERVATORY", eyebrow: "CORE QUEST 02", title: "Radar Observatory", question: "Can he ship a useful product?", intro: "A live data product that turns fragmented hiring feeds into one searchable signal.", x: 74, y: 20, kind: "observatory", projects: [
+    { name: "OpenRoleRadar", summary: "A normalized job discovery pipeline spanning six incompatible ATS providers.", stack: "Python · PostgreSQL · REST APIs · Astro · GitHub Actions", metrics: ["1,400+ postings", "6 ATS providers", "5 min discovery latency"], href: "https://github.com/moosacodes/Open-Role-Radar" },
+  ] },
+  { id: "foundry", mapLabel: "WORKER FOUNDRY", eyebrow: "CORE QUEST 03", title: "Worker Foundry", question: "Can he build at scale?", intro: "A distributed processing system built around retries, idempotency, throughput, and predictable latency.", x: 82, y: 57, kind: "foundry", projects: [
+    { name: "Distributed Job Processing Platform", summary: "Eight workers coordinate durable jobs through a retry-safe Spring Boot backend.", stack: "Java · Spring Boot · PostgreSQL · Redis · Docker", metrics: ["25K+ jobs", "500+ jobs/min", "<120ms p95 at 300+ req/s"] },
+  ] },
+  { id: "watchtower", mapLabel: "SECURITY TOWER", eyebrow: "CORE QUEST 04", title: "Security Watchtower", question: "Can he find and reduce risk?", intro: "Detection and prevention systems that turn noisy cloud activity into decisions teams can act on.", x: 74, y: 83, kind: "tower", projects: [
+    { name: "Cloud Security Detection Platform", summary: "A correlation and investigation layer for cloud authentication and network telemetry.", stack: "AWS · Python · Splunk · Docker", metrics: ["50K+ events/day", "12 MITRE rules", "<5 min investigation"], href: "https://github.com/moosacodes/AI-Powered-Security-Log-Intelligence-Platform" },
+    { name: "Permission Guard", summary: "A CI security gate that identifies dangerous IAM permissions before deployment.", stack: "Python · AWS IAM · Terraform · GitHub Actions", metrics: ["20+ risk patterns", "15/15 bad changes blocked", "SARIF reporting"], href: "https://github.com/moosacodes/Permission-Guard" },
+  ] },
+  { id: "tunnel", mapLabel: "TUNNEL EXCHANGE", eyebrow: "CORE QUEST 05", title: "Tunnel Exchange", question: "Does he understand the wire?", intro: "Packets, routes, tunnels, NAT, and firewalls explored from the host outward.", x: 25, y: 80, kind: "tunnel", projects: [
+    { name: "User-Space VPN Tunnel", summary: "A point-to-point TUN interface that frames and moves IP packets over UDP.", stack: "Python · Linux · TUN/TAP · UDP · Wireshark", metrics: ["User-space routing", "UDP framing", "NAT + firewall policy"], href: "https://github.com/moosacodes/User-Space-VPN-Tunnel" },
+    { name: "Virtualized Network Home Lab", summary: "A two-host routed lab for breaking, observing, and repairing network paths.", stack: "Linux · Docker · TCP/IP · Wireshark", metrics: ["10K+ packets", "20+ Mbps", "6/6 failures resolved"], href: "https://github.com/moosacodes/Virtualized-Network-Home-Lab" },
+  ] },
+  { id: "guild", mapLabel: "GUILD HALL", eyebrow: "FIELD LOG", title: "Guild Hall", question: "Has he shipped with people?", intro: "Internships and leadership work where the result mattered outside the codebase.", x: 47, y: 19, kind: "guild", projects: [
+    { name: "AI Systems Engineering Intern · Synk", summary: "Diagnosed runtime behavior for an AI platform serving more than 60 concurrent users.", stack: "Apr 2026 – Sep 2026", metrics: ["Reliability +18%", "Frame degradation −14%", "Performance +12%"] },
+    { name: "Software Engineering Intern · Vibez Music", summary: "Built Python and Flask tooling, observability, testing, and deployment automation.", stack: "Jan 2026 – Apr 2026", metrics: ["Throughput +40%", "Debug time −35%", "80% automated"] },
+  ] },
+  { id: "comms", mapLabel: "COMMS TOWER", eyebrow: "OPEN CHANNEL", title: "Comms Tower", question: "Ready to talk?", intro: "The signal is clear. Pick a channel and say hello.", x: 48, y: 87, kind: "comms" },
 ];
 
-const SKILL_GROUPS: { id: SkillGroup; label: string }[] = [
-  { id: "networking", label: "Networking" },
-  { id: "systems", label: "Systems" },
-  { id: "focus", label: "Current focus" },
-];
+const CORE_ROUTE: LocationId[] = ["reliability", "radar", "foundry", "watchtower", "tunnel"];
 
-const PROJECT_STACKS = [
-  ["Linux", "Docker", "GitHub Actions", "Wireshark"],
-  ["Python", "TUN/TAP", "UDP", "Wireshark"],
-];
-
-function TrainerSprite({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      viewBox="0 0 16 20"
-      shapeRendering="crispEdges"
-    >
-      <rect x="4" y="0" width="8" height="2" fill="#253a50" />
-      <rect x="2" y="2" width="12" height="2" fill="#d95344" />
-      <rect x="3" y="4" width="10" height="5" fill="#e9bd87" />
-      <rect x="2" y="4" width="3" height="4" fill="#493d38" />
-      <rect x="11" y="4" width="3" height="4" fill="#493d38" />
-      <rect x="5" y="6" width="1" height="1" fill="#253a50" />
-      <rect x="10" y="6" width="1" height="1" fill="#253a50" />
-      <rect x="4" y="9" width="8" height="2" fill="#e9bd87" />
-      <rect x="2" y="11" width="12" height="5" fill="#e8eee2" />
-      <rect x="0" y="11" width="3" height="5" fill="#d95344" />
-      <rect x="13" y="11" width="3" height="5" fill="#d95344" />
-      <rect x="5" y="11" width="2" height="4" fill="#54877b" />
-      <rect x="9" y="11" width="2" height="4" fill="#54877b" />
-      <rect x="3" y="16" width="4" height="3" fill="#293950" />
-      <rect x="9" y="16" width="4" height="3" fill="#293950" />
-      <rect x="2" y="19" width="5" height="1" fill="#f4d86a" />
-      <rect x="9" y="19" width="5" height="1" fill="#f4d86a" />
-    </svg>
-  );
+function Character({ moving = false, large = false }: { moving?: boolean; large?: boolean }) {
+  return <svg className={`${styles.character} ${moving ? styles.characterMoving : ""} ${large ? styles.characterLarge : ""}`} viewBox="0 0 48 64" aria-hidden="true" shapeRendering="crispEdges">
+    <ellipse cx="24" cy="61" rx="15" ry="3" fill="#263238" opacity=".28" />
+    <path d="M9 57h13v5H7v-3h2zM27 57h12l2 2v3H26z" fill="#f5ead0" stroke="#263238" strokeWidth="2" />
+    <path d="M12 39h12v20H10l2-20zM24 39h12l2 20H24z" fill="#59656e" stroke="#263238" strokeWidth="2" />
+    <path d="M9 26h30v19H27l-3-4-3 4H9z" fill="#cb4b43" stroke="#263238" strokeWidth="2" />
+    <path d="M12 27l-7 8 5 5 5-8M36 27l7 8-5 5-5-8" fill="#cb4b43" stroke="#263238" strokeWidth="2" />
+    <path d="M11 38h26M24 27v14" stroke="#f1c75b" strokeWidth="2" />
+    <path d="M32 27L19 45" stroke="#263238" strokeWidth="2" /><rect x="27" y="38" width="10" height="8" rx="1" fill="#254e5a" stroke="#263238" strokeWidth="2" />
+    <path d="M15 12h18v15H15z" fill="#b87555" stroke="#263238" strokeWidth="2" /><rect x="12" y="17" width="4" height="7" fill="#b87555" stroke="#263238" strokeWidth="2" /><rect x="32" y="17" width="4" height="7" fill="#b87555" stroke="#263238" strokeWidth="2" />
+    <path d="M18 21h4M27 21h4M22 25h5" stroke="#263238" strokeWidth="2" />
+    <path d="M13 17V9h4V5h5V3h7v2h5v4h3v10h-5v-6h-4v-3H17v7z" fill="#24242b" stroke="#263238" strokeWidth="2" />
+    <rect x="11" y="7" width="6" height="6" fill="#24242b" stroke="#263238" strokeWidth="2" /><rect x="17" y="2" width="7" height="7" fill="#24242b" stroke="#263238" strokeWidth="2" /><rect x="25" y="1" width="7" height="8" fill="#24242b" stroke="#263238" strokeWidth="2" /><rect x="32" y="5" width="6" height="7" fill="#24242b" stroke="#263238" strokeWidth="2" />
+  </svg>;
 }
 
-function FieldMapArtwork() {
-  return (
-    <svg
-      className={styles.mapArtwork}
-      viewBox="0 0 640 400"
-      preserveAspectRatio="xMidYMid slice"
-      aria-hidden="true"
-      shapeRendering="crispEdges"
-    >
-      <rect width="640" height="400" fill="#b7d9c9" />
-      <rect y="181" width="640" height="219" fill="#8faa69" />
-      <rect y="208" width="640" height="18" fill="#7e9d5f" />
-      <rect x="30" y="42" width="68" height="14" fill="#f7edc8" />
-      <rect x="15" y="56" width="97" height="13" fill="#f7edc8" />
-      <rect x="476" y="72" width="64" height="12" fill="#f7edc8" />
-      <rect x="463" y="84" width="91" height="12" fill="#f7edc8" />
-      <rect x="523" y="39" width="42" height="42" fill="#f0c967" />
-      <rect x="531" y="31" width="26" height="8" fill="#f0c967" />
-      <rect x="515" y="47" width="8" height="26" fill="#f0c967" />
-      <path d="M-12 352H160V319H251V281H344V242H454V198H648V270H510V316H380V354H256V400H-12Z" fill="#d8ba78" />
-      <path d="M-12 364H153V333H244V295H340V256H452V212H648V228H466V272H354V311H259V349H-12Z" fill="#ead195" />
-      <g fill="#5f815a">
-        <rect x="42" y="134" width="35" height="46" />
-        <rect x="34" y="145" width="51" height="29" />
-        <rect x="94" y="159" width="25" height="28" />
-        <rect x="83" y="166" width="47" height="19" />
-        <rect x="164" y="116" width="37" height="52" />
-        <rect x="155" y="129" width="55" height="31" />
-        <rect x="231" y="157" width="32" height="36" />
-        <rect x="220" y="166" width="56" height="22" />
-        <rect x="376" y="137" width="34" height="45" />
-        <rect x="365" y="148" width="56" height="27" />
-        <rect x="451" y="130" width="45" height="52" />
-        <rect x="441" y="145" width="64" height="31" />
-        <rect x="572" y="144" width="36" height="46" />
-        <rect x="562" y="155" width="58" height="28" />
-      </g>
-      <g fill="#486b51">
-        <rect x="51" y="177" width="17" height="18" />
-        <rect x="174" y="165" width="17" height="19" />
-        <rect x="386" y="177" width="17" height="18" />
-        <rect x="465" y="175" width="18" height="17" />
-        <rect x="582" y="181" width="17" height="16" />
-      </g>
-      <g fill="#eff0ca">
-        <rect x="310" y="136" width="20" height="20" />
-        <rect x="304" y="142" width="32" height="8" />
-        <rect x="316" y="130" width="8" height="32" />
-      </g>
-      <g fill="#557c84">
-        <rect x="533" y="218" width="43" height="60" />
-        <rect x="526" y="227" width="57" height="45" />
-        <rect x="541" y="205" width="27" height="14" />
-        <rect x="545" y="197" width="19" height="8" />
-      </g>
-      <g fill="#f0c967">
-        <rect x="550" y="232" width="8" height="8" />
-        <rect x="550" y="247" width="8" height="8" />
-        <rect x="564" y="232" width="8" height="8" />
-        <rect x="564" y="247" width="8" height="8" />
-      </g>
-      <g fill="#f6e8b7">
-        <rect x="22" y="267" width="7" height="7" />
-        <rect x="117" y="236" width="7" height="7" />
-        <rect x="197" y="219" width="7" height="7" />
-        <rect x="283" y="326" width="7" height="7" />
-        <rect x="422" y="299" width="7" height="7" />
-        <rect x="611" y="316" width="7" height="7" />
-      </g>
-      <g fill="#526d4d">
-        <rect x="20" y="382" width="5" height="18" />
-        <rect x="30" y="389" width="5" height="11" />
-        <rect x="609" y="373" width="5" height="27" />
-        <rect x="621" y="384" width="5" height="16" />
-      </g>
-    </svg>
-  );
-}
-
-function ProjectArtwork({ index }: { index: number }) {
-  if (index === 0) {
-    return (
-      <svg className={styles.projectDiagram} viewBox="0 0 440 240" aria-hidden="true">
-        <path d="M82 120H174M266 120H358M220 53V120M220 120V190M82 120L147 185M358 120L292 185" />
-        <path className={styles.diagramRoute} d="M82 120H174H220V53M220 120H358" />
-        <rect x="28" y="91" width="108" height="58" />
-        <rect x="166" y="91" width="108" height="58" />
-        <rect x="304" y="91" width="108" height="58" />
-        <circle cx="220" cy="53" r="19" />
-        <circle cx="147" cy="185" r="13" />
-        <circle cx="292" cy="185" r="13" />
-        <text x="82" y="116" textAnchor="middle">HOST A</text>
-        <text x="82" y="132" textAnchor="middle">192.168.10</text>
-        <text x="220" y="116" textAnchor="middle">ROUTER</text>
-        <text x="220" y="132" textAnchor="middle">FIREWALL</text>
-        <text x="358" y="116" textAnchor="middle">HOST B</text>
-        <text x="358" y="132" textAnchor="middle">192.168.20</text>
-        <text x="220" y="57" textAnchor="middle">DNS</text>
-      </svg>
-    );
-  }
-
-  return (
-    <svg className={styles.projectDiagram} viewBox="0 0 440 240" aria-hidden="true">
-      <path d="M91 121H151M217 121H277M343 121H392" />
-      <path className={styles.diagramRoute} d="M91 121H151H217H277H343H392" />
-      <rect x="21" y="86" width="70" height="70" />
-      <rect x="151" y="86" width="66" height="70" />
-      <rect x="277" y="86" width="66" height="70" />
-      <rect x="363" y="100" width="60" height="42" />
-      <text x="56" y="116" textAnchor="middle">KERNEL</text>
-      <text x="56" y="133" textAnchor="middle">IPv4</text>
-      <text x="184" y="116" textAnchor="middle">TUN</text>
-      <text x="184" y="133" textAnchor="middle">DEVICE</text>
-      <text x="310" y="116" textAnchor="middle">UDP</text>
-      <text x="310" y="133" textAnchor="middle">FRAME</text>
-      <text x="393" y="126" textAnchor="middle">PEER</text>
-      <circle className={styles.diagramPacket} cx="105" cy="121" r="6" />
-    </svg>
-  );
+function BootScreen({ onSkip }: { onSkip: () => void }) {
+  return <div className={styles.boot} role="dialog" aria-label="Loading Moosa's World">
+    <div className={styles.bootNoise} /><div className={styles.bootConsole}>
+      <div className={styles.bootTop}><span>MA-01</span><span>FIELD UNIT</span></div>
+      <div className={styles.bootScreen}><div className={styles.bootSignal}><i /><i /><i /><i /></div><Character large /><div className={styles.bootCopy}><span>INITIALIZING WORLD...</span><strong>MOOSA&apos;S<br />SIGNAL DISTRICT</strong><small>LINKING PROJECT NODES</small></div><div className={styles.bootBar}><i /></div></div>
+      <div className={styles.bootControls}><span className={styles.dpad}>+</span><span>BUILD / EXPLORE / SHIP</span><span className={styles.buttons}>● ●</span></div>
+    </div><button className={styles.skipBoot} onClick={onSkip}>PRESS START <span>↵</span></button>
+  </div>;
 }
 
 export function WorkshopPortfolio() {
   const [booting, setBooting] = useState(true);
-  const [selectedStop, setSelectedStop] = useState<StopId>("home");
-  const [openExperience, setOpenExperience] = useState<number | null>(0);
-  const [skillGroup, setSkillGroup] = useState<SkillGroup>("networking");
-  const [nightMode, setNightMode] = useState(false);
-  const stop = MAP_STOPS.find((item) => item.id === selectedStop) ?? MAP_STOPS[0];
+  const [introStep, setIntroStep] = useState(0);
+  const [currentId, setCurrentId] = useState<LocationId>("square");
+  const [openId, setOpenId] = useState<LocationId | null>(null);
+  const [moving, setMoving] = useState(false);
+  const [visited, setVisited] = useState<Set<LocationId>>(new Set(["square"]));
+  const [tourIndex, setTourIndex] = useState<number | null>(null);
+  const [soundOn, setSoundOn] = useState(false);
+  const [secret, setSecret] = useState(false);
+  const travelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const keyBuffer = useRef("");
 
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setBooting(false);
-      return;
-    }
-    const timer = window.setTimeout(() => setBooting(false), 1150);
-    return () => window.clearTimeout(timer);
-  }, []);
+  useEffect(() => { const timer = setTimeout(() => setBooting(false), 1650); if (window.localStorage.getItem("moosa-world-sound") === "on") setSoundOn(true); return () => clearTimeout(timer); }, []);
+  useEffect(() => { const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setOpenId(null); keyBuffer.current = (keyBuffer.current + event.key.toLowerCase()).slice(-5); if (keyBuffer.current === "moosa") setSecret((value) => !value); }; window.addEventListener("keydown", onKey); return () => window.removeEventListener("keydown", onKey); }, []);
 
-  return (
-    <>
-      {booting && (
-        <div className={styles.bootOverlay} role="dialog" aria-modal="true" aria-label="Portfolio start screen">
-          <div className={styles.bootHandheld}>
-            <div className={styles.bootLabel}>
-              <span>MOOSAdex</span>
-              <span>FIELD LOG 001</span>
-            </div>
-            <div className={styles.bootScreen}>
-              <div className={styles.bootSprite}><TrainerSprite /></div>
-              <p>NEW ADVENTURE<br /><strong>MOOSA ALAM</strong></p>
-              <span className={styles.bootCursor}>PRESS START</span>
-            </div>
-            <div className={styles.bootProgress}><i /></div>
-            <p className={styles.bootStatus}>LOADING TRAINER PROFILE…</p>
-          </div>
-          <button className={styles.skipIntro} type="button" autoFocus onClick={() => setBooting(false)}>
-            Skip intro <span>↵</span>
-          </button>
-        </div>
-      )}
+  const beep = useCallback((frequency = 420, duration = .07) => {
+    if (!soundOn) return;
+    const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextCtor) return;
+    const context = new AudioContextCtor(); const oscillator = context.createOscillator(); const gain = context.createGain();
+    oscillator.type = "square"; oscillator.frequency.value = frequency; gain.gain.setValueAtTime(.035, context.currentTime); gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + duration); oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + duration);
+  }, [soundOn]);
 
-      <main className={styles.page + (nightMode ? " " + styles.night : "")}>
-        <header className={styles.hud}>
-          <a className={styles.brand} href="#top" aria-label="Moosa Alam, back to top">
-            <span className={styles.brandMark}>M</span>
-            <span>MOOSA<span className={styles.brandAccent}>DEX</span><small>FIELD LOG 001</small></span>
-          </a>
-          <nav className={styles.nav} aria-label="Main navigation">
-            <a href="#work">Encounters</a>
-            <a href="#experience">Guild log</a>
-            <a href="#profile">Trainer card</a>
-            <a href="#contact">Contact</a>
-          </nav>
-          <div className={styles.hudActions}>
-            <span className={styles.availability}><i /> Open to co-op</span>
-            <button
-              className={styles.themeToggle}
-              type="button"
-              onClick={() => setNightMode((value) => !value)}
-              aria-label={nightMode ? "Switch to daylight palette" : "Switch to night palette"}
-              title={nightMode ? "Daylight palette" : "Night palette"}
-            >
-              {nightMode ? "☼" : "☾"}
-            </button>
-          </div>
-        </header>
+  const travelTo = useCallback((id: LocationId, fromTour = false) => {
+    if (moving) return; if (travelTimer.current) clearTimeout(travelTimer.current); setOpenId(null); setCurrentId(id); setMoving(true); beep(320, .08);
+    travelTimer.current = setTimeout(() => { setMoving(false); setVisited((old) => new Set([...old, id])); setOpenId(id); beep(620, .11); if (!fromTour) setTourIndex(null); }, 620);
+  }, [beep, moving]);
+  useEffect(() => () => { if (travelTimer.current) clearTimeout(travelTimer.current); }, []);
 
-        <section id="top" className={styles.hero}>
-          <div className={styles.heroCopy}>
-            <p className={styles.eyebrow}><span className={styles.liveDot} /> PROFILE NO. 001 <i /> MILTON, ONTARIO</p>
-            <p className={styles.trainerClass}>COMPUTER SCIENCE CO-OP <span>·</span> SYSTEMS EXPLORER</p>
-            <h1>Moosa<br /><span>Alam</span><b className={styles.titleStar}>✳</b></h1>
-            <p className={styles.heroLead}>
-              I study what happens between packets, processes, and machines.
-            </p>
-            <p className={styles.heroDescription}>
-              A University of Guelph Computer Science student building hands-on depth in Linux, networking, cloud infrastructure, and automation.
-            </p>
-            <div className={styles.heroActions}>
-              <a href="#work" className={styles.primaryButton}>VIEW FIELD LOG <span>↓</span></a>
-              <a href={PROFILE.resumePdf} target="_blank" rel="noreferrer" className={styles.textButton}>OPEN RÉSUMÉ ↗</a>
-            </div>
-            <div className={styles.heroFacts}>
-              <span><small>REGION</small> Guelph · Milton</span>
-              <span><small>CLASS</small> Co-op 2029</span>
-              <span><small>TYPE</small> Systems / Network</span>
-            </div>
-          </div>
+  const startTour = () => { setIntroStep(2); setTourIndex(0); travelTo(CORE_ROUTE[0], true); };
+  const nextTour = () => { if (tourIndex === null) return; if (tourIndex >= CORE_ROUTE.length - 1) { setTourIndex(null); setOpenId(null); beep(780, .16); return; } const next = tourIndex + 1; setTourIndex(next); travelTo(CORE_ROUTE[next], true); };
+  const toggleSound = () => { const next = !soundOn; setSoundOn(next); window.localStorage.setItem("moosa-world-sound", next ? "on" : "off"); };
 
-          <div className={styles.fieldCard}>
-            <div className={styles.fieldTopline}>
-              <span><i /> FIELD MAP <b> / ROUTE 01</b></span>
-              <span>● SAVE DATA OK</span>
-            </div>
-            <div className={styles.mapWorld}>
-              <FieldMapArtwork />
-              <span className={styles.mapCoordinates}>MAP GRID 02-B</span>
-              <span className={styles.mapWeather}>FIELD CONDITIONS <b>GOOD</b></span>
-              {MAP_STOPS.map((item) => (
-                <button
-                  className={styles.mapStop + (selectedStop === item.id ? " " + styles.mapStopActive : "")}
-                  key={item.id}
-                  type="button"
-                  style={{ left: item.x + "%", top: item.y + "%" }}
-                  onClick={() => setSelectedStop(item.id)}
-                  aria-pressed={selectedStop === item.id}
-                  aria-label={"Travel to " + item.title}
-                >
-                  <i /><span>{item.label}</span>
-                </button>
-              ))}
-              <div
-                className={styles.mapTrainer}
-                style={{ left: (stop.x - 3) + "%", top: (stop.y - 23) + "%" }}
-              >
-                <TrainerSprite />
-              </div>
-              <div className={styles.mapLegend}><i /> YOU ARE HERE</div>
-            </div>
-            <div className={styles.fieldCaption}>
-              <div><span>NOW EXPLORING</span><strong>{stop.title}</strong></div>
-              <p>{stop.note}</p>
-            </div>
-          </div>
-        </section>
+  const current = useMemo(() => LOCATIONS.find((item) => item.id === currentId)!, [currentId]);
+  const active = openId ? LOCATIONS.find((item) => item.id === openId)! : null;
+  const coreVisited = CORE_ROUTE.filter((id) => visited.has(id)).length;
+  if (booting) return <BootScreen onSkip={() => setBooting(false)} />;
 
-        <section id="work" className={styles.workSection}>
-          <div className={styles.sectionHeader}>
-            <p className={styles.eyebrow}>01 <i /> FIELD ENCOUNTERS</p>
-            <div>
-              <h2>Built to understand<br /><span>what’s underneath.</span></h2>
-              <p>Two hands-on systems projects. Each one made observable, testable, and easier to explain.</p>
-            </div>
-            <span className={styles.sectionStamp}>2<br />LOGGED</span>
-          </div>
+  return <main className={`${styles.game} ${secret ? styles.secretMode : ""}`}>
+    <header className={styles.hud}>
+      <button className={styles.brand} onClick={() => travelTo("square")} aria-label="Go to Signal Square"><span className={styles.brandIcon}>M</span><span><strong>MOOSA&apos;S WORLD</strong><small>SIGNAL DISTRICT · ONLINE</small></span></button>
+      <div className={styles.hudCenter} aria-label={`${coreVisited} of 5 core locations found`}><span>RELAY LINK</span><div className={styles.relayPips}>{CORE_ROUTE.map((id) => <i key={id} className={visited.has(id) ? styles.relayOn : ""} />)}</div><b>{coreVisited}/5</b></div>
+      <div className={styles.hudActions}><button onClick={startTour} className={styles.tourButton}>▶ QUICK TOUR</button><a href={PROFILE.resumePath} className={styles.resumeButton}>RESUME ↗</a><button className={styles.soundButton} onClick={toggleSound} aria-label={soundOn ? "Mute sound" : "Enable sound"}>{soundOn ? "♪" : "♪̸"}</button></div>
+    </header>
 
-          <div className={styles.projectGrid}>
-            {PROJECTS.map((project, index) => (
-              <article className={styles.projectCard} key={project.name}>
-                <div className={styles.projectArt + (index === 1 ? " " + styles.projectArtSecond : "")}>
-                  <div className={styles.artTopline}>
-                    <span>ENCOUNTER 00{index + 1}</span>
-                    <span>STATUS <b>DOCUMENTED</b></span>
-                  </div>
-                  <ProjectArtwork index={index} />
-                  <span className={styles.artCaption}>{index === 0 ? "SUBNET ROUTE / 02 HOSTS" : "PACKET JOURNEY / TUN → UDP"}</span>
-                </div>
-                <div className={styles.projectInfo}>
-                  <div className={styles.projectHeading}>
-                    <span className={styles.projectNo}>NO. 00{index + 1}</span>
-                    <h3>{project.name}</h3>
-                  </div>
-                  <p>{project.desc}</p>
-                  <div className={styles.stackList}>
-                    {PROJECT_STACKS[index].map((item) => <span key={item}>{item}</span>)}
-                  </div>
-                  <div className={styles.projectActions}>
-                    <a href={project.href} target="_blank" rel="noreferrer">VIEW SOURCE <span>↗</span></a>
-                    {index === 1 && <a href="/projects/user-space-vpn-tunnel">READ CASE STUDY <span>→</span></a>}
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
+    <section className={styles.worldShell} aria-label="Interactive portfolio map">
+      <div className={styles.worldTopline}><span>FIELD MAP / DISTRICT 01</span><span className={styles.status}><i /> SELECT A LOCATION</span><span>42.31°N · 79.88°W</span></div>
+      <div className={styles.world}>
+        <div className={styles.gridTexture} /><div className={styles.river}><i /><i /><i /></div><div className={styles.roadHorizontal} /><div className={styles.roadVertical} /><div className={styles.roadBranchOne} /><div className={styles.roadBranchTwo} /><div className={styles.relayCore} aria-hidden="true"><span /><i /><b /></div>
+        {[...Array(14)].map((_, index) => <span key={index} className={`${styles.tree} ${styles[`tree${index + 1}`] || ""}`} />)}
+        {[...Array(8)].map((_, index) => <span key={index} className={`${styles.rock} ${styles[`rock${index + 1}`] || ""}`} />)}
+        {LOCATIONS.filter((item) => item.id !== "square").map((location) => <button key={location.id} className={`${styles.location} ${styles[location.kind]} ${visited.has(location.id) ? styles.locationVisited : ""}`} style={{ left: `${location.x}%`, top: `${location.y}%` }} onClick={() => travelTo(location.id)} aria-label={`${location.mapLabel}: ${location.question}`} disabled={moving}>
+          <span className={styles.buildingRoof}><i /></span><span className={styles.buildingBody}><i /><b /></span><strong>{location.mapLabel}</strong><small>{location.question}</small>
+        </button>)}
+        <button className={`${styles.squareMarker} ${visited.has("square") ? styles.locationVisited : ""}`} style={{ left: "50%", top: "57%" }} onClick={() => travelTo("square")} disabled={moving}><span>◆</span><strong>SIGNAL SQUARE</strong></button>
+        <div className={`${styles.player} ${moving ? styles.playerMoving : ""}`} style={{ left: `${current.x}%`, top: `${current.y}%` }}><span className={styles.playerTag}>YOU</span><Character moving={moving} /></div>
+        <div className={styles.mapKey}><span><i className={styles.keyRed} /> PROJECT</span><span><i className={styles.keyGold} /> VISITED</span><span>CLICK / TAP TO TRAVEL</span></div>
+      </div>
+    </section>
 
-        <section id="experience" className={styles.experienceSection}>
-          <div className={styles.sectionHeader + " " + styles.experienceHeader}>
-            <p className={styles.eyebrow}>02 <i /> GUILD LOG</p>
-            <div>
-              <h2>Experience points<br /><span>earned on the job.</span></h2>
-              <p>People, teams, and real responsibilities that shaped how I work.</p>
-            </div>
-            <span className={styles.sectionStamp}>04<br />ENTRIES</span>
-          </div>
-          <div className={styles.experienceList}>
-            {EXPERIENCE.map((job, index) => (
-              <article className={styles.experienceEntry} key={job.org + job.role}>
-                <button
-                  className={styles.experienceToggle}
-                  type="button"
-                  onClick={() => setOpenExperience(openExperience === index ? null : index)}
-                  aria-expanded={openExperience === index}
-                >
-                  <span className={styles.experienceIndex}>0{index + 1}</span>
-                  <span className={styles.experienceMain}>
-                    <small>{job.period}</small>
-                    <strong>{job.role}</strong>
-                  </span>
-                  <span className={styles.experienceOrg}>{job.org}</span>
-                  <span className={styles.experienceExpand}>{openExperience === index ? "−" : "+"}</span>
-                </button>
-                {openExperience === index && (
-                  <ul className={styles.experienceDetails}>
-                    {job.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}
-                  </ul>
-                )}
-              </article>
-            ))}
-          </div>
-          <p className={styles.nextQuest}>
-            <span>NEXT QUEST</span> Pursuing datacenter operations, Linux, networking, automation, and cluster infrastructure. These are interests in progress.
-          </p>
-        </section>
+    {introStep < 2 && <div className={styles.dialogueWrap}><div className={styles.speakerPortrait}><Character large /></div><button className={styles.dialogue} onClick={() => { beep(480); setIntroStep((value) => value + 1); }}><span>MOOSA</span><p>{introStep === 0 ? "Yo—welcome to my signal district. Every building here is something I designed, broke, measured, and rebuilt." : "Short on time? Run the Quick Tour. Got a minute? Pick anywhere and I’ll meet you there."}</p><small>CLICK TO CONTINUE <b>▼</b></small></button></div>}
 
-        <section id="profile" className={styles.profileSection}>
-          <div className={styles.sectionHeader}>
-            <p className={styles.eyebrow}>03 <i /> TRAINER CARD</p>
-            <div>
-              <h2>Curious about the<br /><span>layers most miss.</span></h2>
-              <p>Still learning. Happiest with a terminal open and a packet capture running.</p>
-            </div>
-            <span className={styles.sectionStamp}>PLAYER<br />PROFILE</span>
-          </div>
-          <div className={styles.profileGrid}>
-            <div className={styles.profileCopy}>
-              {ABOUT.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
-              <div className={styles.leadership}>
-                <span className={styles.miniLabel}>IN THE COMMUNITY</span>
-                {LEADERSHIP.map((item) => (
-                  <div className={styles.leadershipItem} key={item.role}>
-                    <strong>{item.role}</strong>
-                    <span>{item.org}</span>
-                    <p>{item.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <aside className={styles.trainerCard}>
-              <div className={styles.trainerCardTop}><span>TRAINER DATA</span><span>NO. 001</span></div>
-              <div className={styles.trainerCardIdentity}>
-                <div className={styles.portraitTile}><TrainerSprite /></div>
-                <div><span>NAME</span><strong>MOOSA ALAM</strong><small>{PROFILE.location}</small></div>
-              </div>
-              <div className={styles.trainerStat}><span>EDUCATION</span><strong>{EDUCATION.degree}</strong><small>{EDUCATION.school} · {EDUCATION.expected}</small></div>
-              <div className={styles.trainerStat}><span>AREA OF EMPHASIS</span><strong>{EDUCATION.emphasis}</strong></div>
-              <div className={styles.trainerStat}><span>CREDENTIALS</span>
-                {CERTIFICATIONS.map((cert) => (
-                  <strong className={styles.credential} key={cert.title}>
-                    {cert.title}<small>{cert.meta}</small>
-                  </strong>
-                ))}
-              </div>
-            </aside>
-          </div>
-        </section>
+    {active && introStep >= 2 && <aside className={styles.dossier} aria-label={`${active.title} details`}>
+      <div className={styles.dossierTop}><span>{active.eyebrow}</span><button onClick={() => { setOpenId(null); setTourIndex(null); }} aria-label="Close panel">×</button></div>
+      <div className={styles.dossierTitle}><span className={styles.locationGlyph}>{active.id === "square" ? "M" : active.id.slice(0, 1).toUpperCase()}</span><div><small>{active.question}</small><h1>{active.title}</h1></div></div><p className={styles.dossierIntro}>{active.intro}</p>
+      {active.id === "square" && <div className={styles.playerFile}><div><span>CLASS</span><strong>Infrastructure-minded software engineer</strong></div><div><span>BASE</span><strong>Milton, Ontario · University of Guelph</strong></div><div><span>CREDENTIAL</span><strong>AWS Certified Cloud Practitioner</strong></div><div className={styles.playerLinks}><a href={PROFILE.github} target="_blank" rel="noreferrer">GITHUB ↗</a><a href={PROFILE.linkedin} target="_blank" rel="noreferrer">LINKEDIN ↗</a></div></div>}
+      {active.projects?.map((project, index) => <article className={styles.project} key={project.name}><div className={styles.projectIndex}>0{index + 1}</div><div className={styles.projectCopy}><h2>{project.name}</h2><p>{project.summary}</p><span className={styles.stack}>{project.stack}</span><div className={styles.metrics}>{project.metrics.map((metric) => <strong key={metric}>{metric}</strong>)}</div>{project.href && <a href={project.href} target="_blank" rel="noreferrer">VIEW SOURCE <span>↗</span></a>}</div></article>)}
+      {active.id === "comms" && <div className={styles.commsLinks}><a href={`mailto:${PROFILE.email}`}><span>EMAIL</span><strong>{PROFILE.email}</strong><i>↗</i></a><a href={PROFILE.linkedin} target="_blank" rel="noreferrer"><span>LINKEDIN</span><strong>/in/moosa-alam</strong><i>↗</i></a><a href={PROFILE.github} target="_blank" rel="noreferrer"><span>GITHUB</span><strong>@{PROFILE.githubHandle}</strong><i>↗</i></a><a href={PROFILE.resumePath}><span>RESUME</span><strong>Open field record</strong><i>↗</i></a></div>}
+      {tourIndex !== null && <div className={styles.tourControls}><span>QUICK TOUR · {tourIndex + 1}/{CORE_ROUTE.length}</span><button onClick={nextTour}>{tourIndex === CORE_ROUTE.length - 1 ? "FINISH TOUR" : "NEXT STOP"} →</button></div>}
+    </aside>}
 
-        <section className={styles.skillsSection} aria-labelledby="skills-title">
-          <div className={styles.skillsHeading}>
-            <div><p className={styles.eyebrow}>04 <i /> CURRENT LOADOUT</p><h2 id="skills-title">Tools on hand.</h2></div>
-            <p>Skills grow with every build. Pick a field kit to inspect.</p>
-          </div>
-          <div className={styles.skillTabs} role="tablist" aria-label="Skill categories">
-            {SKILL_GROUPS.map((group) => (
-              <button
-                className={skillGroup === group.id ? styles.skillTabActive : ""}
-                type="button"
-                role="tab"
-                aria-selected={skillGroup === group.id}
-                key={group.id}
-                onClick={() => setSkillGroup(group.id)}
-              >
-                {group.label}<span>{SKILLS[group.id].length.toString().padStart(2, "0")}</span>
-              </button>
-            ))}
-          </div>
-          <div className={styles.skillItems} role="tabpanel">
-            {SKILLS[skillGroup].map((skill, index) => (
-              <span key={skill}><i>{(index + 1).toString().padStart(2, "0")}</i>{skill}</span>
-            ))}
-          </div>
-        </section>
-
-        <section id="contact" className={styles.contactSection}>
-          <p className={styles.eyebrow}>05 <i /> OPEN CHANNEL</p>
-          <div className={styles.contactContent}>
-            <div>
-              <h2>Have a good<br /><span>system to explore?</span></h2>
-              <p>Open to co-op roles in systems, software, cloud, and networking. Let’s talk.</p>
-            </div>
-            <div className={styles.contactLinks}>
-              <a href={"mailto:" + PROFILE.email}><span>EMAIL</span><strong>{PROFILE.email}</strong><i>↗</i></a>
-              <a href={PROFILE.github} target="_blank" rel="noreferrer"><span>GITHUB</span><strong>github.com/{PROFILE.githubHandle}</strong><i>↗</i></a>
-              <a href={PROFILE.linkedin} target="_blank" rel="noreferrer"><span>LINKEDIN</span><strong>in/moosa-alam</strong><i>↗</i></a>
-              <a href={PROFILE.resumePdf} target="_blank" rel="noreferrer"><span>RÉSUMÉ</span><strong>Open PDF</strong><i>↗</i></a>
-            </div>
-          </div>
-        </section>
-
-        <footer className={styles.footer}>
-          <a href="#top" className={styles.footerBrand}>MOOSAdex <span>↑ BACK TO ROUTE 01</span></a>
-          <span>BUILT WITH CURIOSITY · {PROFILE.location.toUpperCase()} · © 2026</span>
-        </footer>
-      </main>
-    </>
-  );
+    {coreVisited === CORE_ROUTE.length && !openId && introStep >= 2 && <button className={styles.completionToast} onClick={() => travelTo("comms")}><span>◆ RELAY RESTORED</span><strong>All core signals found.</strong><small>Open a channel →</small></button>}
+    <footer className={styles.footer}><span>MADE FROM SCRATCH BY MOOSA</span><span>TIP: TYPE MY FIRST NAME</span><span>© 2026 · SIGNAL DISTRICT v2.0</span></footer>
+  </main>;
 }
+
+declare global { interface Window { webkitAudioContext?: typeof AudioContext } }

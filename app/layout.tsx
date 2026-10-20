@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit, JetBrains_Mono } from "next/font/google";
-import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
+import "./globals.css";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -16,41 +16,35 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Moosa Alam — Systems & Networking",
+  title: "Moosa Alam | Cloud, Systems & Software Engineer",
   description:
-    "Moosa Alam is a University of Guelph Computer Science co-op student building hands-on experience in Linux, networking, cloud infrastructure, and automation.",
+    "Explore Moosa Alam's interactive portfolio of cloud reliability, distributed systems, security, and networking projects.",
   metadataBase: process.env.NEXT_PUBLIC_SITE_URL
     ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
     : undefined,
   openGraph: {
-    title: "Moosa Alam — Systems & Networking",
+    title: "Moosa Alam | Cloud, Systems & Software Engineer",
     description:
-      "Computer Science co-op student exploring systems, networking, cloud infrastructure, and automation.",
+      "An interactive portfolio of cloud reliability, distributed systems, security, and networking projects.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Moosa Alam — Systems & Networking",
+    title: "Moosa Alam | Cloud, Systems & Software Engineer",
     description:
-      "Computer Science co-op student exploring systems, networking, cloud infrastructure, and automation.",
+      "An interactive portfolio of cloud reliability, distributed systems, security, and networking projects.",
   },
   robots: "index, follow",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f5efd8",
+  themeColor: "#172c2e",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
-      <body
-        className={`${outfit.variable} ${jetbrains.variable} h-full antialiased`}
-      >
+      <body className={`${outfit.variable} ${jetbrains.variable} h-full antialiased`}>
         {children}
         <Analytics />
       </body>
