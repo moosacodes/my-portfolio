@@ -9,30 +9,30 @@ type Project = { name: string; summary: string; stack: string; metrics: string[]
 type Location = { id: LocationId; mapLabel: string; eyebrow: string; title: string; question: string; intro: string; x: number; y: number; kind: string; projects?: Project[] };
 
 const LOCATIONS: Location[] = [
-  { id: "square", mapLabel: "SIGNAL SQUARE", eyebrow: "PLAYER FILE 001", title: "Moosa Alam", question: "Who built this place?", intro: "Computer Science co-op student at the University of Guelph. I build reliable cloud, backend, networking, and security systems—and I measure what improves.", x: 50, y: 57, kind: "square" },
-  { id: "reliability", mapLabel: "RELIABILITY STN.", eyebrow: "CORE QUEST 01", title: "Reliability Station", question: "Can he keep systems alive?", intro: "Infrastructure that recovers quickly, reports its own failures, and can be rebuilt without guesswork.", x: 22, y: 25, kind: "station", projects: [
+  { id: "square", mapLabel: "SIGNAL SQUARE", eyebrow: "PLAYER FILE 001", title: "Moosa Alam", question: "Who built this place?", intro: "Computer Science co-op student at the University of Guelph. I build reliable cloud, backend, networking, and security systems—and I measure what improves.", x: 50, y: 50, kind: "square" },
+  { id: "reliability", mapLabel: "RELIABILITY STN.", eyebrow: "CORE QUEST 01", title: "Reliability Station", question: "Can he keep systems alive?", intro: "Infrastructure that recovers quickly, reports its own failures, and can be rebuilt without guesswork.", kind: "station", projects: [
     { name: "Cloud-Native Reliability Platform", summary: "A five-service Kubernetes platform engineered for observable, recoverable delivery.", stack: "Kubernetes · AWS · Terraform · Docker", metrics: ["12K+ req/min", "<60s recovery", "95%+ failures caught <45s"] },
     { name: "InfraPulse", summary: "Reproducible AWS infrastructure with SLOs, failure injection, and actionable alerts.", stack: "Python · AWS · Terraform · Docker", metrics: ["<10m full rebuild", "4 failure modes", "3 SLIs · 1 SLO"], href: "https://github.com/moosacodes/InfraPulse" },
-  ] },
-  { id: "radar", mapLabel: "RADAR OBSERVATORY", eyebrow: "CORE QUEST 02", title: "Radar Observatory", question: "Can he ship a useful product?", intro: "A live data product that turns fragmented hiring feeds into one searchable signal.", x: 74, y: 20, kind: "observatory", projects: [
+  ], x: 28, y: 21 },
+  { id: "radar", mapLabel: "RADAR OBSERVATORY", eyebrow: "CORE QUEST 02", title: "Radar Observatory", question: "Can he ship a useful product?", intro: "A live data product that turns fragmented hiring feeds into one searchable signal.", x: 84, y: 18, kind: "observatory", projects: [
     { name: "OpenRoleRadar", summary: "A normalized job discovery pipeline spanning six incompatible ATS providers.", stack: "Python · PostgreSQL · REST APIs · Astro · GitHub Actions", metrics: ["1,400+ postings", "6 ATS providers", "5 min discovery latency"], href: "https://github.com/moosacodes/Open-Role-Radar" },
   ] },
-  { id: "foundry", mapLabel: "WORKER FOUNDRY", eyebrow: "CORE QUEST 03", title: "Worker Foundry", question: "Can he build at scale?", intro: "A distributed processing system built around retries, idempotency, throughput, and predictable latency.", x: 82, y: 57, kind: "foundry", projects: [
+  { id: "foundry", mapLabel: "WORKER FOUNDRY", eyebrow: "CORE QUEST 03", title: "Worker Foundry", question: "Can he build at scale?", intro: "A distributed processing system built around retries, idempotency, throughput, and predictable latency.", x: 82, y: 48, kind: "foundry", projects: [
     { name: "Distributed Job Processing Platform", summary: "Eight workers coordinate durable jobs through a retry-safe Spring Boot backend.", stack: "Java · Spring Boot · PostgreSQL · Redis · Docker", metrics: ["25K+ jobs", "500+ jobs/min", "<120ms p95 at 300+ req/s"] },
   ] },
-  { id: "watchtower", mapLabel: "SECURITY TOWER", eyebrow: "CORE QUEST 04", title: "Security Watchtower", question: "Can he find and reduce risk?", intro: "Detection and prevention systems that turn noisy cloud activity into decisions teams can act on.", x: 74, y: 83, kind: "tower", projects: [
+  { id: "watchtower", mapLabel: "SECURITY TOWER", eyebrow: "CORE QUEST 04", title: "Security Watchtower", question: "Can he find and reduce risk?", intro: "Detection and prevention systems that turn noisy cloud activity into decisions teams can act on.", x: 87, y: 75, kind: "tower", projects: [
     { name: "Cloud Security Detection Platform", summary: "A correlation and investigation layer for cloud authentication and network telemetry.", stack: "AWS · Python · Splunk · Docker", metrics: ["50K+ events/day", "12 MITRE rules", "<5 min investigation"], href: "https://github.com/moosacodes/AI-Powered-Security-Log-Intelligence-Platform" },
     { name: "Permission Guard", summary: "A CI security gate that identifies dangerous IAM permissions before deployment.", stack: "Python · AWS IAM · Terraform · GitHub Actions", metrics: ["20+ risk patterns", "15/15 bad changes blocked", "SARIF reporting"], href: "https://github.com/moosacodes/Permission-Guard" },
   ] },
-  { id: "tunnel", mapLabel: "TUNNEL EXCHANGE", eyebrow: "CORE QUEST 05", title: "Tunnel Exchange", question: "Does he understand the wire?", intro: "Packets, routes, tunnels, NAT, and firewalls explored from the host outward.", x: 25, y: 80, kind: "tunnel", projects: [
+  { id: "tunnel", mapLabel: "TUNNEL EXCHANGE", eyebrow: "CORE QUEST 05", title: "Tunnel Exchange", question: "Does he understand the wire?", intro: "Packets, routes, tunnels, NAT, and firewalls explored from the host outward.", x: 23, y: 74, kind: "tunnel", projects: [
     { name: "User-Space VPN Tunnel", summary: "A point-to-point TUN interface that frames and moves IP packets over UDP.", stack: "Python · Linux · TUN/TAP · UDP · Wireshark", metrics: ["User-space routing", "UDP framing", "NAT + firewall policy"], href: "https://github.com/moosacodes/User-Space-VPN-Tunnel" },
     { name: "Virtualized Network Home Lab", summary: "A two-host routed lab for breaking, observing, and repairing network paths.", stack: "Linux · Docker · TCP/IP · Wireshark", metrics: ["10K+ packets", "20+ Mbps", "6/6 failures resolved"], href: "https://github.com/moosacodes/Virtualized-Network-Home-Lab" },
   ] },
-  { id: "guild", mapLabel: "GUILD HALL", eyebrow: "FIELD LOG", title: "Guild Hall", question: "Has he shipped with people?", intro: "Internships and leadership work where the result mattered outside the codebase.", x: 47, y: 19, kind: "guild", projects: [
+  { id: "guild", mapLabel: "GUILD HALL", eyebrow: "FIELD LOG", title: "Guild Hall", question: "Has he shipped with people?", intro: "Internships and leadership work where the result mattered outside the codebase.", x: 52, y: 18, kind: "guild", projects: [
     { name: "AI Systems Engineering Intern · Synk", summary: "Diagnosed runtime behavior for an AI platform serving more than 60 concurrent users.", stack: "Apr 2026 – Sep 2026", metrics: ["Reliability +18%", "Frame degradation −14%", "Performance +12%"] },
     { name: "Software Engineering Intern · Vibez Music", summary: "Built Python and Flask tooling, observability, testing, and deployment automation.", stack: "Jan 2026 – Apr 2026", metrics: ["Throughput +40%", "Debug time −35%", "80% automated"] },
   ] },
-  { id: "comms", mapLabel: "COMMS TOWER", eyebrow: "OPEN CHANNEL", title: "Comms Tower", question: "Ready to talk?", intro: "The signal is clear. Pick a channel and say hello.", x: 48, y: 87, kind: "comms" },
+  { id: "comms", mapLabel: "COMMS TOWER", eyebrow: "OPEN CHANNEL", title: "Comms Tower", question: "Ready to talk?", intro: "The signal is clear. Pick a channel and say hello.", x: 52, y: 78, kind: "comms" },
 ];
 
 const CORE_ROUTE: LocationId[] = ["reliability", "radar", "foundry", "watchtower", "tunnel"];
@@ -73,11 +73,14 @@ export function WorkshopPortfolio() {
   const [tourIndex, setTourIndex] = useState<number | null>(null);
   const [soundOn, setSoundOn] = useState(false);
   const [secret, setSecret] = useState(false);
+  const [night, setNight] = useState(false);
   const travelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const worldRef = useRef<HTMLDivElement>(null);
   const keyBuffer = useRef("");
 
   useEffect(() => { const timer = setTimeout(() => setBooting(false), 1650); if (window.localStorage.getItem("moosa-world-sound") === "on") setSoundOn(true); return () => clearTimeout(timer); }, []);
-  useEffect(() => { const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setOpenId(null); keyBuffer.current = (keyBuffer.current + event.key.toLowerCase()).slice(-5); if (keyBuffer.current === "moosa") setSecret((value) => !value); }; window.addEventListener("keydown", onKey); return () => window.removeEventListener("keydown", onKey); }, []);
+  useEffect(() => { if (!booting && worldRef.current) worldRef.current.scrollLeft = Math.max(0, (worldRef.current.scrollWidth - worldRef.current.clientWidth) / 2); }, [booting]);
+  useEffect(() => { const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setOpenId(null); if (event.key.toLowerCase() === "n") setNight((value) => !value); keyBuffer.current = (keyBuffer.current + event.key.toLowerCase()).slice(-5); if (keyBuffer.current === "moosa") setSecret((value) => !value); }; window.addEventListener("keydown", onKey); return () => window.removeEventListener("keydown", onKey); }, []);
 
   const beep = useCallback((frequency = 420, duration = .07) => {
     if (!soundOn) return;
@@ -89,7 +92,12 @@ export function WorkshopPortfolio() {
 
   const travelTo = useCallback((id: LocationId, fromTour = false) => {
     if (moving) return; if (travelTimer.current) clearTimeout(travelTimer.current); setOpenId(null); setCurrentId(id); setMoving(true); beep(320, .08);
-    travelTimer.current = setTimeout(() => { setMoving(false); setVisited((old) => new Set([...old, id])); setOpenId(id); beep(620, .11); if (!fromTour) setTourIndex(null); }, 620);
+    const destination = LOCATIONS.find((item) => item.id === id);
+    if (destination && worldRef.current) {
+      const target = worldRef.current.scrollWidth * destination.x / 100 - worldRef.current.clientWidth / 2;
+      worldRef.current.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
+    }
+    travelTimer.current = setTimeout(() => { setMoving(false); setVisited((old) => new Set([...old, id])); setOpenId(id); beep(620, .11); if (!fromTour) setTourIndex(null); }, 900);
   }, [beep, moving]);
   useEffect(() => () => { if (travelTimer.current) clearTimeout(travelTimer.current); }, []);
 
@@ -102,25 +110,27 @@ export function WorkshopPortfolio() {
   const coreVisited = CORE_ROUTE.filter((id) => visited.has(id)).length;
   if (booting) return <BootScreen onSkip={() => setBooting(false)} />;
 
-  return <main className={`${styles.game} ${secret ? styles.secretMode : ""}`}>
+  return <main className={`${styles.game} ${secret ? styles.secretMode : ""} ${night ? styles.nightMode : ""}`}>
     <header className={styles.hud}>
       <button className={styles.brand} onClick={() => travelTo("square")} aria-label="Go to Signal Square"><span className={styles.brandIcon}>M</span><span><strong>MOOSA&apos;S WORLD</strong><small>SIGNAL DISTRICT · ONLINE</small></span></button>
       <div className={styles.hudCenter} aria-label={`${coreVisited} of 5 core locations found`}><span>RELAY LINK</span><div className={styles.relayPips}>{CORE_ROUTE.map((id) => <i key={id} className={visited.has(id) ? styles.relayOn : ""} />)}</div><b>{coreVisited}/5</b></div>
-      <div className={styles.hudActions}><button onClick={startTour} className={styles.tourButton}>▶ QUICK TOUR</button><a href={PROFILE.resumePath} className={styles.resumeButton}>RESUME ↗</a><button className={styles.soundButton} onClick={toggleSound} aria-label={soundOn ? "Mute sound" : "Enable sound"}>{soundOn ? "♪" : "♪̸"}</button></div>
+      <div className={styles.hudActions}><button onClick={startTour} className={styles.tourButton}>▶ QUICK TOUR</button><a href={PROFILE.resumePath} className={styles.resumeButton}>RESUME ↗</a><button className={styles.soundButton} onClick={() => setNight((value) => !value)} aria-label={night ? "Switch to day" : "Switch to night"}>{night ? "☀" : "☾"}</button><button className={styles.soundButton} onClick={toggleSound} aria-label={soundOn ? "Mute sound" : "Enable sound"}>{soundOn ? "♪" : "♪̸"}</button></div>
     </header>
 
     <section className={styles.worldShell} aria-label="Interactive portfolio map">
       <div className={styles.worldTopline}><span>FIELD MAP / DISTRICT 01</span><span className={styles.status}><i /> SELECT A LOCATION</span><span>42.31°N · 79.88°W</span></div>
-      <div className={styles.world}>
-        <div className={styles.gridTexture} /><div className={styles.river}><i /><i /><i /></div><div className={styles.roadHorizontal} /><div className={styles.roadVertical} /><div className={styles.roadBranchOne} /><div className={styles.roadBranchTwo} /><div className={styles.relayCore} aria-hidden="true"><span /><i /><b /></div>
-        {[...Array(14)].map((_, index) => <span key={index} className={`${styles.tree} ${styles[`tree${index + 1}`] || ""}`} />)}
-        {[...Array(8)].map((_, index) => <span key={index} className={`${styles.rock} ${styles[`rock${index + 1}`] || ""}`} />)}
-        {LOCATIONS.filter((item) => item.id !== "square").map((location) => <button key={location.id} className={`${styles.location} ${styles[location.kind]} ${visited.has(location.id) ? styles.locationVisited : ""}`} style={{ left: `${location.x}%`, top: `${location.y}%` }} onClick={() => travelTo(location.id)} aria-label={`${location.mapLabel}: ${location.question}`} disabled={moving}>
-          <span className={styles.buildingRoof}><i /></span><span className={styles.buildingBody}><i /><b /></span><strong>{location.mapLabel}</strong><small>{location.question}</small>
-        </button>)}
-        <button className={`${styles.squareMarker} ${visited.has("square") ? styles.locationVisited : ""}`} style={{ left: "50%", top: "57%" }} onClick={() => travelTo("square")} disabled={moving}><span>◆</span><strong>SIGNAL SQUARE</strong></button>
-        <div className={`${styles.player} ${moving ? styles.playerMoving : ""}`} style={{ left: `${current.x}%`, top: `${current.y}%` }}><span className={styles.playerTag}>YOU</span><Character moving={moving} /></div>
-        <div className={styles.mapKey}><span><i className={styles.keyRed} /> PROJECT</span><span><i className={styles.keyGold} /> VISITED</span><span>CLICK / TAP TO TRAVEL</span></div>
+      <div ref={worldRef} className={`${styles.world} ${active ? styles.worldFocused : ""}`}>
+        <div className={styles.worldArt}>
+          <div className={styles.sunWash} /><div className={styles.cloudOne} /><div className={styles.cloudTwo} /><div className={styles.scanBeam} />
+          <div className={styles.airship}><i /><span>MA-NET</span></div>
+          {[...Array(12)].map((_, index) => <i key={index} className={`${styles.firefly} ${styles[`firefly${index + 1}`] || ""}`} />)}
+          {LOCATIONS.filter((item) => item.id !== "square").map((location) => <button key={location.id} className={`${styles.location} ${styles[location.kind]} ${visited.has(location.id) ? styles.locationVisited : ""} ${currentId === location.id ? styles.locationCurrent : ""}`} style={{ left: `${location.x}%`, top: `${location.y}%` }} onClick={() => travelTo(location.id)} aria-label={`${location.mapLabel}: ${location.question}`} disabled={moving}>
+            <span className={styles.hotspotRing}><i /><b /></span><strong>{location.mapLabel}</strong><small>{location.question}</small>
+          </button>)}
+          <button className={`${styles.squareMarker} ${currentId === "square" ? styles.locationCurrent : ""}`} style={{ left: "50%", top: "50%" }} onClick={() => travelTo("square")} disabled={moving}><span>◆</span><strong>SIGNAL SQUARE</strong><small>Start here</small></button>
+          <div className={`${styles.player} ${moving ? styles.playerMoving : ""}`} style={{ left: `${current.x}%`, top: `${current.y}%` }}><span className={styles.playerTag}>{moving ? "TRAVELLING" : "YOU"}</span><Character moving={moving} /><i className={styles.playerPulse} /></div>
+          <div className={styles.mapKey}><span><i className={styles.keyRed} /> PROJECT NODE</span><span><i className={styles.keyGold} /> DISCOVERED</span><span>CLICK / TAP A LANDMARK</span></div>
+        </div>
       </div>
     </section>
 
