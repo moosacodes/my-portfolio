@@ -26,32 +26,32 @@ export default function ResumePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
-      <header className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+    <div className="min-h-screen bg-[#f5efd8] text-[#283b45] flex flex-col">
+      <header className="flex items-center justify-between px-4 py-3 border-b border-[#c9c2a4]">
         <Link
           href="/"
-          className="text-sm text-white/60 hover:text-white transition-colors"
+          className="text-sm text-[#62736c] hover:text-[#283b45] transition-colors"
         >
-          ← Back to MOOSA.OS
+          ← Back to MOOSAdex
         </Link>
-        <span className="text-white/40 text-xs">Resume · Moosa Alam</span>
+        <span className="text-[#62736c] text-xs">Résumé · Moosa Alam</span>
         <a
           href="/Moosa_Alam_Networking_Resume.pdf"
           download
-          className="text-sm text-white/60 hover:text-white transition-colors"
+          className="text-sm text-[#62736c] hover:text-[#283b45] transition-colors"
         >
           Download
         </a>
       </header>
       <main className="flex-1 flex flex-col min-h-0">
         {error && (
-          <div className="p-6 text-center text-white/70">
+          <div className="p-6 text-center text-[#62736c]">
             <p>Could not load the PDF.</p>
             <a
               href="/Moosa_Alam_Networking_Resume.pdf"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 inline-block text-sm underline hover:text-white"
+              className="mt-2 inline-block text-sm underline hover:text-[#283b45]"
             >
               Open PDF in new tab
             </a>
@@ -65,8 +65,8 @@ export default function ResumePage() {
           />
         )}
         {!pdfUrl && !error && (
-          <div className="flex-1 flex items-center justify-center text-white/50 text-sm">
-            Loading…
+          <div className="flex-1 flex items-center justify-center text-[#62736c] text-sm">
+            Loading résumé…
           </div>
         )}
       </main>

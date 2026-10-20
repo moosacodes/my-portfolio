@@ -5,7 +5,7 @@ import styles from "@/components/portfolio/CaseStudy.module.css";
 export default function UserSpaceVpnCaseStudy() {
   return (
     <main className={styles.page}>
-      <div className={styles.nav}><Link href="/">← Back to the workshop</Link></div>
+      <div className={styles.nav}><Link href="/">← Back to the field log</Link></div>
       <article className={styles.main}>
       <p className={styles.kicker}>case study / network lab</p>
       <h1>User-Space VPN Tunnel</h1>

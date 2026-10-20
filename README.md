@@ -1,6 +1,6 @@
 # MOOSAALAM.DEV
 
-Personal portfolio for Moosa Alam, a Computer Science student at the University of Guelph. The site is a retro-computing-inspired workshop for systems, networking, cloud infrastructure, automation, and software projects.
+Personal portfolio for Moosa Alam, a Computer Science student at the University of Guelph. The site is a pixel-art field journal inspired by classic handheld RPGs, with original map and network diagrams for systems, networking, cloud infrastructure, automation, and software projects.
 
 ## Stack
 
@@ -24,7 +24,7 @@ npm run build
 
 | Path | Role |
 |------|------|
-| `app/page.tsx` | Approved Retro Hardware Workshop homepage |
+| `app/page.tsx` | Interactive pixel-art field journal homepage |
 | `components/portfolio/` | Production portfolio and case-study presentation |
 | `components/prototypes/` | Isolated design directions used during the redesign selection phase |
 | `lib/portfolio/data.ts` | Verified profile, work, education, project, and contact data |
@@ -33,7 +33,7 @@ npm run build
 
 ## Design directions
 
-The selected production direction is **Retro Hardware Workshop**: a darker, industrial visual language inspired by hardware benches, signal paths, technical manuals, and old computer interfaces. The temporary comparison routes remain available on the redesign branch:
+The production direction is a **classic handheld RPG field journal**: route exploration, encounter cards, and a trainer profile rendered in original pixel-inspired CSS and SVG. The temporary comparison routes remain available:
 
 - `/directions/archive`
 - `/directions/workshop`

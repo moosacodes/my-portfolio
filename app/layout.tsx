@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Outfit, JetBrains_Mono, Caveat } from "next/font/google";
+import { Outfit, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -15,36 +15,30 @@ const jetbrains = JetBrains_Mono({
   weight: ["400", "500", "600"],
 });
 
-const caveat = Caveat({
-  subsets: ["latin"],
-  variable: "--font-hand",
-  weight: ["500", "600", "700"],
-});
-
 export const metadata: Metadata = {
-  title: "Moosa Alam — MOOSA.EXE",
+  title: "Moosa Alam — Systems & Networking",
   description:
-    "Moosa Alam is a University of Guelph Computer Science student building and investigating systems, networking, cloud infrastructure, and automation projects.",
+    "Moosa Alam is a University of Guelph Computer Science co-op student building hands-on experience in Linux, networking, cloud infrastructure, and automation.",
   metadataBase: process.env.NEXT_PUBLIC_SITE_URL
     ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
     : undefined,
   openGraph: {
-    title: "Moosa Alam — MOOSA.EXE",
+    title: "Moosa Alam — Systems & Networking",
     description:
-      "Computer Science co-op student building and investigating the layers underneath reliable software.",
+      "Computer Science co-op student exploring systems, networking, cloud infrastructure, and automation.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Moosa Alam — MOOSA.EXE",
+    title: "Moosa Alam — Systems & Networking",
     description:
-      "Computer Science co-op student building and investigating the layers underneath reliable software.",
+      "Computer Science co-op student exploring systems, networking, cloud infrastructure, and automation.",
   },
   robots: "index, follow",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#171a19",
+  themeColor: "#f5efd8",
 };
 
 export default function RootLayout({
@@ -55,7 +49,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <body
-        className={`${outfit.variable} ${jetbrains.variable} ${caveat.variable} h-full antialiased`}
+        className={`${outfit.variable} ${jetbrains.variable} h-full antialiased`}
       >
         {children}
         <Analytics />
